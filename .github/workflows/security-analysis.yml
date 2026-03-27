@@ -1,0 +1,64 @@
+---
+# Security Analysis Workflow
+# Runs security scans including Bandit, Safety, and dependency checks.
+#
+# Features:
+#   - Bandit static analysis for Python
+#   - Safety dependency vulnerability scanning
+#   - Weekly scheduled scans
+name: Security Analysis
+
+"on":
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  schedule:
+    # Run security scans weekly on Monday at 9 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+# Cancel in-progress runs for same PR/branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  security-events: write
+  pull-requests: write
+
+# Standalone security workflow
+jobs:
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Install dependencies
+        run: uv sync --all-extras
+
+      - name: Run Bandit security scan
+        run: uv run bandit -r src/ -c pyproject.toml -f json -o bandit-report.json || true
+
+      - name: Run Safety dependency check
+        run: uv run safety check --output json > safety-report.json || true
+
+      - name: Upload security reports
+        uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0
+        with:
+          name: security-reports
+          path: |
+            bandit-report.json
+            safety-report.json
+          retention-days: 30
