@@ -58,7 +58,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     - Permissions-Policy: Restrict browser features
     """
 
-    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+    async def dispatch(
+        self, request: Request, call_next: RequestResponseEndpoint
+    ) -> Response:
         """Add security headers to response."""
         response = await call_next(request)
 
@@ -223,7 +225,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         return request.client.host
 
-    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+    async def dispatch(
+        self, request: Request, call_next: RequestResponseEndpoint
+    ) -> Response:
         """Apply rate limiting per IP address."""
         # Skip rate limiting for exempt paths
         if any(request.url.path.startswith(p) for p in self.EXEMPT_PREFIXES):
@@ -436,7 +440,9 @@ class SSRFPreventionMiddleware(BaseHTTPMiddleware):
 
         return False
 
-    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+    async def dispatch(
+        self, request: Request, call_next: RequestResponseEndpoint
+    ) -> Response:
         """Check for SSRF patterns in request.
 
         Validates query parameters, form data, and JSON body for potential

@@ -65,6 +65,7 @@ jobs:
           uv sync --all-extras
 
       - name: Run tests
+        shell: bash
         run: |
           uv run pytest tests/ -v --tb=short -x \
             --ignore=tests/integration \

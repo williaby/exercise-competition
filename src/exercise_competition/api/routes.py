@@ -63,6 +63,7 @@ class LeaderboardContext(TypedDict):
 
     standings: list[Standing]
     current_week: int | None
+    total_weeks: int
     success: str | None
     joke: str
 
@@ -167,24 +168,24 @@ def _build_submit_context(
     )
 
 
-def _validate_participant_name(name: str) -> Participant | None:
-    """Look up and return a Participant by name, or None if not found.
+def _validate_participant_name(name: str) -> int | None:
+    """Look up a participant by name and return their ID, or None if not found.
 
     This validates the submitted name against real database records,
-    preventing arbitrary name injection.
+    preventing arbitrary name injection.  Returns only the scalar ID
+    so the caller is not holding a detached ORM object.
 
     Args:
         name: The participant name to look up.
 
     Returns:
-        The Participant ORM object, or None.
+        The participant's database ID, or None.
     """
     with get_session() as session:
-        return (
-            session.query(Participant)
-            .filter(Participant.name == name)
-            .first()
+        participant = (
+            session.query(Participant).filter(Participant.name == name).first()
         )
+        return participant.id if participant is not None else None
 
 
 # ---------------------------------------------------------------------------
@@ -244,8 +245,8 @@ def submit_exercise(
         return templates.TemplateResponse(request, "submit.html", _ctx(context))
 
     # Participant validation — must match a known database record
-    participant = _validate_participant_name(participant_name)
-    if participant is None:
+    participant_id = _validate_participant_name(participant_name)
+    if participant_id is None:
         logger.warning(
             "unknown_participant_rejected",
             participant=participant_name,
@@ -257,7 +258,7 @@ def submit_exercise(
 
     with get_session() as session:
         submission = WeeklySubmission(
-            participant_id=participant.id,
+            participant_id=participant_id,
             week_number=week_number,
             monday=monday,
             tuesday=tuesday,
@@ -273,7 +274,10 @@ def submit_exercise(
         except IntegrityError as exc:
             session.rollback()
             error_detail = str(exc.orig) if exc.orig else str(exc)
-            if "uq_participant_week" in error_detail.lower() or "unique" in error_detail.lower():
+            if (
+                "uq_participant_week" in error_detail.lower()
+                or "unique" in error_detail.lower()
+            ):
                 logger.warning(
                     "duplicate_submission_rejected",
                     participant=participant_name,
@@ -300,7 +304,7 @@ def submit_exercise(
         logger.info(
             "exercise_submitted",
             participant=participant_name,
-            participant_id=participant.id,
+            participant_id=participant_id,
             week_number=week_number,
             days_exercised=submission.days_exercised,
             is_compliant=submission.is_compliant,
@@ -333,6 +337,7 @@ def leaderboard(
     context = LeaderboardContext(
         standings=standings,
         current_week=current_week,
+        total_weeks=settings.week_max,
         success=success_msg,
         joke=get_random_joke(),
     )

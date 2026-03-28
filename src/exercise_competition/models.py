@@ -110,7 +110,7 @@ class WeeklySubmission(Base):
 
     @property
     def is_compliant(self) -> bool:
-        """Whether this week meets the compliance threshold (2+ days)."""
+        """Whether this week meets the configured compliance threshold."""
         from exercise_competition.core.config import settings  # noqa: PLC0415
 
         return self.days_exercised >= settings.compliance_threshold

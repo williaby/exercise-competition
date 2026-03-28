@@ -12,12 +12,12 @@
 <div class="competition-status">
     <div class="status-week">
         <span class="status-week-number">{{ current_week }}</span>
-        Week {{ current_week }} of 20
+        Week {{ current_week }} of {{ total_weeks }}
     </div>
     <div class="status-progress">
-        <div class="status-progress-bar" style="width: {{ (current_week / 20 * 100) | round }}%"></div>
+        <div class="status-progress-bar" style="width: {{ (current_week / total_weeks * 100) | round }}%"></div>
     </div>
-    <div class="status-remaining">{{ 20 - current_week }} weeks left</div>
+    <div class="status-remaining">{{ total_weeks - current_week }} weeks left</div>
 </div>
 {% else %}
 <div class="competition-status">
@@ -61,7 +61,7 @@
 
 <h2 class="section-heading">&#128197; Week Results</h2>
 <div class="week-timeline">
-    {% for week in range(1, 21) %}
+    {% for week in range(1, total_weeks + 1) %}
     <a href="/week/{{ week }}" class="week-chip {% if current_week and week == current_week %}current{% elif current_week and week < current_week %}past{% endif %}">{{ week }}</a>
     {% endfor %}
 </div>
