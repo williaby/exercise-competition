@@ -144,7 +144,7 @@ class TestWeeklySubmission:
         assert sub.days_exercised == 0
 
     @pytest.mark.parametrize(
-        "days_kwargs, expected",
+        ("days_kwargs", "expected"),
         [
             pytest.param({"monday": True, "tuesday": True}, True, id="two-days-compliant"),
             pytest.param({"monday": True}, False, id="one-day-not-compliant"),

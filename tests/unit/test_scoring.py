@@ -48,7 +48,7 @@ class TestGetCurrentWeek:
     """Tests for get_current_week()."""
 
     @pytest.mark.parametrize(
-        "fake_now, expected_week",
+        ("fake_now", "expected_week"),
         [
             pytest.param(
                 datetime.datetime(2026, 3, 29, 12, 0, tzinfo=COMPETITION_TZ),
@@ -94,7 +94,7 @@ class TestDaysExercised:
     """Tests for days_exercised()."""
 
     @pytest.mark.parametrize(
-        "days_kwargs, expected_count",
+        ("days_kwargs", "expected_count"),
         [
             pytest.param({}, 0, id="zero-days"),
             pytest.param(
@@ -127,7 +127,7 @@ class TestIsCompliant:
     """Tests for is_compliant()."""
 
     @pytest.mark.parametrize(
-        "days_kwargs, expected_compliant",
+        ("days_kwargs", "expected_compliant"),
         [
             pytest.param({}, False, id="zero-days-not-compliant"),
             pytest.param({"monday": True}, False, id="one-day-not-compliant"),
