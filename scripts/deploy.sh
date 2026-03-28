@@ -1,15 +1,19 @@
 #!/usr/bin/env bash
 # Deploy exercise competition to Vultr VPS
 # Usage: ./scripts/deploy.sh
+#
+# Pushes to GitHub, then SSHs to the VPS to git pull and rebuild.
+# Falls back to Vultr API console command if SSH is unavailable (WSL2 NAT issue).
 
 set -euo pipefail
 
-# Load config from .env
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+REMOTE_DIR="/opt/exercise-competition"
+REPO_URL="https://github.com/williaby/exercise-competition.git"
 
+# Load config from .env
 if [[ -f "$PROJECT_DIR/.env" ]]; then
-    # Only extract the specific vars we need (avoids issues with special chars in passwords)
     VULTR_VPS_IP="$(grep '^VULTR_VPS_IP=' "$PROJECT_DIR/.env" | cut -d= -f2-)"
     VULTR_SSH_USER="$(grep '^VULTR_SSH_USER=' "$PROJECT_DIR/.env" | cut -d= -f2-)"
     VULTR_SSH_KEY_PATH="$(grep '^VULTR_SSH_KEY_PATH=' "$PROJECT_DIR/.env" | cut -d= -f2-)"
@@ -18,33 +22,30 @@ fi
 VPS_IP="${VULTR_VPS_IP:?Set VULTR_VPS_IP in .env}"
 VPS_USER="${VULTR_SSH_USER:-root}"
 SSH_KEY="${VULTR_SSH_KEY_PATH:-~/.ssh/id_ed25519}"
+
+# Step 1: Push latest code to GitHub
+echo "==> Pushing to GitHub..."
+cd "$PROJECT_DIR"
+git push origin main
+
+# Step 2: Deploy on VPS via SSH
+REMOTE_COMMANDS=$(cat <<'REMOTE_SCRIPT'
+set -e
 REMOTE_DIR="/opt/exercise-competition"
+REPO_URL="https://github.com/williaby/exercise-competition.git"
 
-echo "==> Deploying to ${VPS_USER}@${VPS_IP}..."
+cd "$REMOTE_DIR"
 
-# Sync project files (exclude dev-only stuff)
-rsync -avz --delete \
-    --exclude '.git' \
-    --exclude '.venv' \
-    --exclude '__pycache__' \
-    --exclude '*.pyc' \
-    --exclude '.pytest_cache' \
-    --exclude '.ruff_cache' \
-    --exclude '.mypy_cache' \
-    --exclude 'node_modules' \
-    --exclude 'frontend/node_modules' \
-    --exclude 'tmp_cleanup' \
-    --exclude '.env' \
-    --exclude 'htmlcov' \
-    --exclude '*.egg-info' \
-    -e "ssh -i ${SSH_KEY}" \
-    "$PROJECT_DIR/" "${VPS_USER}@${VPS_IP}:${REMOTE_DIR}/"
+# Initialize git if needed
+if [[ ! -d .git ]]; then
+    git init
+    git remote add origin "$REPO_URL"
+fi
 
-echo "==> Synced files to ${REMOTE_DIR}"
-
-# Create production .env on the server if it doesn't exist
-ssh -i "$SSH_KEY" "${VPS_USER}@${VPS_IP}" bash -s <<'REMOTE_SCRIPT'
-cd /opt/exercise-competition
+# Pull latest
+echo "==> Pulling latest from GitHub..."
+git fetch origin main
+git reset --hard origin/main
 
 # Create prod .env if missing
 if [[ ! -f .env ]]; then
@@ -81,3 +82,21 @@ fi
 echo "==> Deployment complete"
 docker compose ps
 REMOTE_SCRIPT
+)
+
+echo "==> Deploying to ${VPS_USER}@${VPS_IP}..."
+
+if ssh -o ConnectTimeout=5 -o BatchMode=yes -i "$SSH_KEY" "${VPS_USER}@${VPS_IP}" true 2>/dev/null; then
+    # SSH works — deploy directly
+    ssh -i "$SSH_KEY" "${VPS_USER}@${VPS_IP}" bash -s <<< "$REMOTE_COMMANDS"
+else
+    echo ""
+    echo "==> SSH unavailable from this environment (WSL2 NAT issue)."
+    echo "==> Code has been pushed to GitHub."
+    echo ""
+    echo "Run this on the VPS (via Termius or Vultr console):"
+    echo ""
+    echo "  cd /opt/exercise-competition && git fetch origin main && git reset --hard origin/main && docker compose build --no-cache && docker compose up -d"
+    echo ""
+    exit 1
+fi
