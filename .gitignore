@@ -282,5 +282,11 @@ output/
 tmp_cleanup/.tmp-*
 !tmp_cleanup/.gitkeep
 
+# Qlty (local tool cache)
+.qlty/
+
+# Deploy scripts with credentials
+scripts/deploy_paramiko.py
+
 # Claude Code
 .claude/
