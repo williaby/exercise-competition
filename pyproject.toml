@@ -26,50 +26,12 @@ dependencies = [
     "python-dotenv>=1.0.0",
     "structlog>=23.1.0",
     "rich>=13.5.0",
-    # Cross-Version Compatibility Dependencies
-    # =========================================
-    # This template targets Python 3.10-3.14. Add version-specific dependencies
-    # here if your code needs compatibility shims or replacements.
-    #
-    # COMMON BACKPORTS FOR 3.10 COMPATIBILITY:
-    #   "tomli>=2.0.0; python_version < '3.11'",  # TOML parser (tomllib added in 3.11)
-    #   "exceptiongroup>=1.1.0; python_version < '3.11'",  # Exception groups (added in 3.11)
-    #   "typing-extensions>=4.12.0",  # Backport newer typing features
-    #
-    # AVAILABLE IN 3.11+:
-    #   - tomllib: Native TOML parser
-    #   - asyncio.TaskGroup: Structured concurrency
-    #   - typing.Self, TypeVarTuple, Never, LiteralString
-    #   - ExceptionGroup and except* syntax
-    #
-    # PEP 594 REMOVALS IN 3.13 (add replacements if needed):
-    #   Removed modules: aifc, audioop, cgi, cgitb, chunk, crypt, imghdr, mailcap,
-    #   msilib, nis, nntplib, ossaudiodev, pipes, sndhdr, spwd, sunau, telnetlib,
-    #   uu, xdrlib
-    #
-    # Examples of version-specific dependencies:
-    #   # Backport for Python 3.10
-    #   "tomli>=2.0.0; python_version < '3.11'",
-    #
-    #   # Replacement for removed modules in 3.13+
-    #   "legacy-cgi>=2.6.1; python_version >= '3.13'",  # If you need cgi module
-    #   "filetype>=1.2.0",  # Better alternative to imghdr/sndhdr
-    #
-    #   # Typing enhancements
-    #   "typing-extensions>=4.12.0; python_version < '3.13'",  # For latest typing features
-    #
-    # PYTHON 3.14+ CONSIDERATIONS:
-    #   - from __future__ import annotations is deprecated (but still works until 2029+)
-    #   - Free-threaded mode (python3.14t) may need GIL-compatible packages
-    #   - NotImplemented in boolean context raises TypeError (was warning)
-    #   - PEP 649: Deferred annotation evaluation (impacts runtime introspection)
-    #
-    # Examples for 3.14+ compatibility:
-    #   # Free-threaded mode support (check package documentation)
-    #   "numpy>=2.1.0; python_version >= '3.14'",  # Supports free-threaded mode
-    #
-    # UV handles these automatically based on the Python version being used.
-    # See: https://docs.astral.sh/uv/concepts/dependencies/#dependency-specifiers
+    # Web framework + database
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.23.0",
+    "python-multipart>=0.0.18",
+    "sqlalchemy>=2.0.0",
+    "jinja2>=3.1.0",
 ]
 
 # Optional dependency groups
@@ -107,15 +69,6 @@ dev = [
 ]
 
 
-# API framework dependencies
-api = [
-    "fastapi>=0.120.1",
-    "uvicorn[standard]>=0.23.0",
-    "python-multipart>=0.0.18",
-    "starlette>=0.49.1",
-    "sqlalchemy[asyncio]>=2.0.0",  # ORM for database operations
-    "alembic>=1.12.0",  # Database migrations
-]
 
 
 
@@ -495,6 +448,9 @@ omit = [
     # Python internals
     "*/__pycache__/*",
     "*/site-packages/*",
+
+    # Template boilerplate (unmodified from cookiecutter)
+    "*/middleware/security.py",  # OWASP security middleware template code
 
     # Development artifacts (from image_detection best practices)
     "validation/*",     # Validation/verification scripts

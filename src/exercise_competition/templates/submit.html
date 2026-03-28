@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Submit Exercise - Exercise Competition{% endblock %}
+{% block content %}
+<h1>Log Your Exercise</h1>
+
+{% if error %}
+<div class="alert alert-error">{{ error }}</div>
+{% endif %}
+
+{% if success %}
+<div class="alert alert-success">{{ success }}</div>
+{% endif %}
+
+<form method="post" action="/submit">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+    <label for="participant_name">Who are you?</label>
+    <select name="participant_name" id="participant_name" required>
+        {% for name in participants %}
+        <option value="{{ name }}">{{ name }}</option>
+        {% endfor %}
+    </select>
+
+    <label for="week_number">Week</label>
+    <select name="week_number" id="week_number" required>
+        {% for week in weeks %}
+        <option value="{{ week }}" {% if week == current_week %}selected{% endif %}>
+            Week {{ week }}
+        </option>
+        {% endfor %}
+    </select>
+
+    <fieldset>
+        <legend>Days exercised (30+ minutes)</legend>
+        <div class="checkbox-grid">
+            <label class="day-checkbox">
+                <input type="checkbox" name="monday" value="true">
+                <span>Mon</span>
+            </label>
+            <label class="day-checkbox">
+                <input type="checkbox" name="tuesday" value="true">
+                <span>Tue</span>
+            </label>
+            <label class="day-checkbox">
+                <input type="checkbox" name="wednesday" value="true">
+                <span>Wed</span>
+            </label>
+            <label class="day-checkbox">
+                <input type="checkbox" name="thursday" value="true">
+                <span>Thu</span>
+            </label>
+            <label class="day-checkbox">
+                <input type="checkbox" name="friday" value="true">
+                <span>Fri</span>
+            </label>
+            <label class="day-checkbox">
+                <input type="checkbox" name="saturday" value="true">
+                <span>Sat</span>
+            </label>
+            <label class="day-checkbox">
+                <input type="checkbox" name="sunday" value="true">
+                <span>Sun</span>
+            </label>
+        </div>
+    </fieldset>
+
+    <button type="submit">Submit</button>
+</form>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Leaderboard - Exercise Competition{% endblock %}
+{% block content %}
+<h1>Leaderboard</h1>
+
+{% if success %}
+<div class="alert alert-success">{{ success }}</div>
+{% endif %}
+
+{% if current_week %}
+<p class="week-info">Current week: <strong>{{ current_week }}</strong> of 20</p>
+{% else %}
+<p class="week-info">Competition has not started yet or has ended.</p>
+{% endif %}
+
+<table>
+    <thead>
+        <tr>
+            <th>Rank</th>
+            <th>Name</th>
+            <th>Points</th>
+            <th>Avg Days/Wk</th>
+            <th>Streak</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for standing in standings %}
+        <tr {% if loop.first and standing.points > 0 %}class="leader"{% endif %}>
+            <td>{{ loop.index }}</td>
+            <td>{{ standing.name }}</td>
+            <td>{{ standing.points }}</td>
+            <td>{{ standing.avg_days }}</td>
+            <td>{% if standing.streak > 0 %}{{ standing.streak }}w{% else %}-{% endif %}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h2>Week Results</h2>
+<div class="week-links">
+    {% for week in range(1, 21) %}
+    <a href="/week/{{ week }}" class="week-link {% if current_week and week == current_week %}current{% endif %}">{{ week }}</a>
+    {% endfor %}
+</div>
+{% endblock %}

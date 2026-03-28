@@ -74,7 +74,7 @@ async def liveness() -> HealthStatus:
     )
 
 
-async def check_database() -> ReadinessCheck:
+def check_database() -> ReadinessCheck:
     """Check database connectivity.
 
     Returns:
@@ -83,11 +83,12 @@ async def check_database() -> ReadinessCheck:
     start = time.time()
     try:
         # Import here to avoid circular dependencies
+        from sqlalchemy import text
+
         from exercise_competition.core.database import get_session
 
-        async with get_session() as session:
-            # Simple query to check connectivity
-            await session.execute("SELECT 1")
+        with get_session() as session:
+            session.execute(text("SELECT 1"))
 
         latency_ms = (time.time() - start) * 1000
         return ReadinessCheck(
@@ -99,66 +100,6 @@ async def check_database() -> ReadinessCheck:
         latency_ms = (time.time() - start) * 1000
         return ReadinessCheck(
             name="database",
-            status=False,
-            latency_ms=round(latency_ms, 2),
-            error=str(e),
-        )
-
-
-async def check_cache() -> ReadinessCheck:
-    """Check Redis/cache connectivity.
-
-    Returns:
-        ReadinessCheck with cache status and latency
-    """
-    start = time.time()
-    try:
-        # Example Redis check - adjust based on your cache implementation
-        # from exercise_competition.core.cache import redis_client
-        # await redis_client.ping()
-
-        # Placeholder - replace with actual cache check
-        latency_ms = (time.time() - start) * 1000
-        return ReadinessCheck(
-            name="cache",
-            status=True,
-            latency_ms=round(latency_ms, 2),
-        )
-    except Exception as e:
-        latency_ms = (time.time() - start) * 1000
-        return ReadinessCheck(
-            name="cache",
-            status=False,
-            latency_ms=round(latency_ms, 2),
-            error=str(e),
-        )
-
-
-async def check_external_service() -> ReadinessCheck:
-    """Check external API/service connectivity.
-
-    Returns:
-        ReadinessCheck with external service status
-    """
-    start = time.time()
-    try:
-        # Example external service check
-        # import httpx
-        # async with httpx.AsyncClient() as client:
-        #     response = await client.get("https://api.example.com/health", timeout=2.0)
-        #     response.raise_for_status()
-
-        # Placeholder - replace with actual external service check
-        latency_ms = (time.time() - start) * 1000
-        return ReadinessCheck(
-            name="external_api",
-            status=True,
-            latency_ms=round(latency_ms, 2),
-        )
-    except Exception as e:
-        latency_ms = (time.time() - start) * 1000
-        return ReadinessCheck(
-            name="external_api",
             status=False,
             latency_ms=round(latency_ms, 2),
             error=str(e),
@@ -175,27 +116,18 @@ async def check_external_service() -> ReadinessCheck:
     summary="Readiness probe",
     description="Checks if the application can serve traffic. Used by Kubernetes readiness probe.",
 )
-async def readiness() -> ReadinessStatus:
+def readiness() -> ReadinessStatus:
     """Kubernetes readiness probe.
 
     Checks all critical dependencies:
     - Database connectivity
-    - Cache availability (if configured)
-    - External service health (if applicable)
 
     Returns HTTP 503 if any critical dependency is unavailable.
     If this fails, Kubernetes will stop sending traffic to this pod.
     """
     checks: dict[str, ReadinessCheck] = {}
 
-    # Run all checks in parallel for better performance
-    # For now, run sequentially - can be optimized with asyncio.gather()
-    checks["database"] = await check_database()
-    # Uncomment if using cache:
-    # checks["cache"] = await check_cache()
-
-    # Uncomment if checking external services:
-    # checks["external_api"] = await check_external_service()
+    checks["database"] = check_database()
 
     # Determine overall status
     all_healthy = all(check.status for check in checks.values())

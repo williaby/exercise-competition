@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
     json_logs: bool = False
     include_timestamp: bool = True
+    database_url: str = "sqlite:///data/competition.db"
 
 
 # A single, global instance of the settings
