@@ -132,7 +132,7 @@ class TestCorrelationContextProcessor:
         try:
             event_dict: dict = {"event": "test"}
             result = correlation_context_processor(
-                "logger",
+                MagicMock(spec=[]),  # Unused logger arg; must satisfy WrappedLogger type
                 "info",
                 event_dict,
             )
@@ -152,7 +152,7 @@ class TestCorrelationContextProcessor:
         try:
             event_dict: dict = {"event": "test"}
             result = correlation_context_processor(
-                "logger",
+                MagicMock(spec=[]),  # Unused logger arg; must satisfy WrappedLogger type
                 "info",
                 event_dict,
             )
@@ -172,7 +172,7 @@ class TestCorrelationContextProcessor:
         try:
             event_dict: dict = {"event": "test"}
             result = correlation_context_processor(
-                "logger",
+                MagicMock(spec=[]),  # Unused logger arg; must satisfy WrappedLogger type
                 "info",
                 event_dict,
             )
@@ -192,7 +192,7 @@ class TestCorrelationContextProcessor:
         try:
             event_dict: dict = {"event": "test"}
             result = correlation_context_processor(
-                "logger",
+                MagicMock(spec=[]),  # Unused logger arg; must satisfy WrappedLogger type
                 "info",
                 event_dict,
             )
@@ -221,7 +221,7 @@ class TestCorrelationContextProcessor:
         try:
             event_dict: dict = {"event": "test"}
             result = correlation_context_processor(
-                "logger",
+                MagicMock(spec=[]),  # Unused logger arg; must satisfy WrappedLogger type
                 "info",
                 event_dict,
             )
