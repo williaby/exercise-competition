@@ -88,6 +88,14 @@ NICK_JOKES: list[str] = [
     "Salem Endocrinology's finest, ladies and gentlemen. Check the leaderboard for his fitness credentials.",
     "Nick can tell you exactly which hormones control weight gain. Still won't help him win.",
     "Somewhere in Salem, Nick is telling a patient to exercise more while actively losing this competition.",
+    "Nick counsels patients on the dangers of a sedentary lifestyle, then sits down to check his leaderboard ranking.",
+    "Nick's endocrinology training covered every gland in the human body. None of them are helping him win.",
+    "Nick adjusts hormone levels for optimal health outcomes. His own optimal outcome is apparently fourth place.",
+    "Nick can spot an underactive thyroid from across the room but can't spot two free days to exercise.",
+    "Nick writes 'increase physical activity' on patient care plans with the confidence of a man not losing a fitness competition.",
+    "Nick's patients come in with slow metabolisms. Nick comes in with slow leaderboard progress. It's a support group.",
+    "Nick optimizes cortisol, insulin, and testosterone levels for patients. His own levels are optimized for disappointment.",
+    "Nick spent years studying the endocrine system — the body's engine. His engine is in park.",
     # =====================================================================
     # Philosophy & History Degrees (15%)
     # =====================================================================
@@ -190,6 +198,21 @@ NICK_JOKES: list[str] = [
     "Nick was raised by three brothers and it shows.",
     "The only thing Nick got first was the blame.",
     "Nick's favorite childhood game was 'Why are you hitting yourself?'",
+    "Nick's childhood was 90% being told 'you're too young' and 10% being told 'you should know better by now.'",
+    "Nick didn't learn to fight. He learned to run, hide, and negotiate — the three pillars of youngest child survival.",
+    "Nick's first complete sentence was 'that's not fair' and he hasn't stopped saying it since.",
+    "The youngest child never picks the movie, the restaurant, or the car seat. Nick's entire worldview was shaped by the middle seat of a minivan.",
+    "Nick grew up thinking his name was 'And Nick' because every family introduction ended with it.",
+    "As the youngest, Nick's opinion at family meetings had the same weight as the dog's.",
+    "Nick's childhood coping mechanism was charm. It's the only reason he survived three older brothers.",
+    "The youngest child is always the funniest in the family. It's a survival adaptation. Nick adapted.",
+    "Nick didn't get to choose his own haircut until he left for college. Three brothers, zero democracy.",
+    "Being the youngest means every family photo has Nick in whatever was left after his brothers picked their outfits.",
+    "Nick's childhood bedroom was whatever room was left. His closet was whatever fit after hand-me-downs.",
+    "The youngest child's love language is 'finally being included.' Nick is still waiting.",
+    "Nick learned diplomacy early. When you're the smallest person in every argument, you negotiate or you lose.",
+    "As the baby, Nick's role at family gatherings hasn't changed in 39 years: show up, get roasted, say nothing.",
+    "Nick's entire childhood was a beta test. His brothers were the finished product.",
     # =====================================================================
     # Golden Retriever Dad Energy (1%)
     # =====================================================================
