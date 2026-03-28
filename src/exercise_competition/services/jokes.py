@@ -16,6 +16,10 @@ Categories:
 - Boring, Oregon
 - OHSU pipeline
 - Philosophical references
+- The Williams Family Medical Hierarchy
+- Deep-cut clinical burns
+- Existential & career trajectory burns
+- Leaderboard-specific zingers
 """
 
 from __future__ import annotations
@@ -109,7 +113,7 @@ NICK_JOKES: list[str] = [
     "Nick has a History degree and a Philosophy minor. That's two ways to think deeply about why you're not a doctor.",
     "History degree, Philosophy minor, PA certificate. Nick collected credentials like Pokémon but stopped before the evolution.",
     "Nick studied Human Physiology at Oregon and still chose the career path with the fewest years of school. Coincidence?",
-    "Somewhere in Prineville, a high school guidance counselor is updating their 'what not to do' PowerPoint with Nick's transcript.",
+    "Somewhere, a high school guidance counselor is updating their 'what not to do' PowerPoint with Nick's transcript.",
     "Nick's Philosophy minor taught him to ask 'Why?' His career answers it: 'Because medical school was too hard.'",
     "Nick works in endocrinology, where he helps patients optimize their hormones. His own cortisol spikes every time someone calls Justin 'Doctor Williams.'",
     # =====================================================================
@@ -134,10 +138,10 @@ NICK_JOKES: list[str] = [
     "The Williams family doesn't have a black sheep. They have a PA sheep.",
     "Byron built this entire app just to roast Nick. That's brotherhood.",
     "Byron controls the leaderboard, the jokes, and Nick's self-esteem. That's what big brothers are for.",
-    "Nick grew up in Prineville watching his dad be a real doctor for the whole town. Then chose the off-brand version.",
+    "Nick grew up watching his dad be a real doctor for the whole town. Then chose the off-brand version.",
     "Three older brothers, and Nick still couldn't figure out that the path was: OHSU → MD, not OHSU → PA.",
     "The Williams family produces doctors the way Oregon produces rain. Nick is the drought.",
-    "Nick was baptized in 1995 in Prineville. His competitive spirit was buried there too.",
+    "Nick was baptized in 1995. His competitive spirit was buried there too.",
     "Byron, Justin, Nick, and Bruce: a CPA, an OB/GYN, a PA, and a retired family doc walk into a fitness competition. The PA loses.",
     "Nick is the only Williams brother whose credential needs a hyphen and a footnote.",
     # =====================================================================
@@ -146,7 +150,7 @@ NICK_JOKES: list[str] = [
     "Bruce is in his 70s, retired, and still competing. Nick is 39 with a metabolism specialty. No pressure.",
     "If Bruce beats Nick in any given week, Nick should have to surrender his endocrinology certification.",
     "Bruce practiced medicine for 39 years. Nick has been alive for 39 years. Only one of those is impressive.",
-    "Bruce is a retired MD who practiced in Prineville for four decades. Nick works in Salem and loses fitness competitions.",
+    "Bruce is a retired MD who practiced for four decades. Nick works in Salem and loses fitness competitions.",
     "A man who retired from medicine is outworking the man who currently practices it. Classic Williams energy.",
     "Bruce doesn't need to check Nick's thyroid to know what's wrong. It's called not exercising.",
     # =====================================================================
@@ -227,15 +231,6 @@ NICK_JOKES: list[str] = [
     "Nick's PA badge gets him into the hospital. Justin's MD badge gets him respect. There's a difference.",
     "Nick chose to work under a supervising physician. The rest of the family just calls that 'dinner with Dad.'",
     "Nick's wife outranks him medically. His brother outranks him medically. His dad outranks him medically. His kids outrank him in honesty.",
-    # =====================================================================
-    # Prineville & Oregon Roots
-    # =====================================================================
-    "Nick grew up in Prineville watching his dad be a doctor, went to school for 8 years, and came home as the guy who works for one.",
-    "Bruce practiced medicine in Prineville for 40 years. Nick practiced almost-medicine until someone built him a leaderboard to lose on.",
-    "Nick moved from Prineville to Redmond to Bend to Salem chasing endocrinology. Should've chased an MD instead.",
-    "Nick was born in Prineville, baptized in Prineville, and will be buried by this leaderboard in Prineville.",
-    "Nick went to the University of Oregon. Justin went to Oregon State. Only one of them ended up with an MD. Go Beavs.",
-    "Bruce's Oregon medical license: 1984-2023. Thirty-nine years of actual doctoring. Nick's entire career is a rounding error on that timeline.",
     # =====================================================================
     # Deep-Cut Clinical Burns
     # =====================================================================
