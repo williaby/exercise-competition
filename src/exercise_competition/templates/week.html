@@ -1,48 +1,51 @@
 {% extends "base.html" %}
 {% block title %}Week {{ week_number }} - Exercise Competition{% endblock %}
 {% block content %}
-<h1>Week {{ week_number }} Results</h1>
+<h1 class="page-title">Week {{ week_number }} Results</h1>
+<p class="page-subtitle">How did everyone do?</p>
 
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Mon</th>
-            <th>Tue</th>
-            <th>Wed</th>
-            <th>Thu</th>
-            <th>Fri</th>
-            <th>Sat</th>
-            <th>Sun</th>
-            <th>Days</th>
-            <th>Status</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for entry in week_data %}
-        <tr>
-            <td>{{ entry.name }}</td>
-            <td>{% if entry.monday %}&#10003;{% endif %}</td>
-            <td>{% if entry.tuesday %}&#10003;{% endif %}</td>
-            <td>{% if entry.wednesday %}&#10003;{% endif %}</td>
-            <td>{% if entry.thursday %}&#10003;{% endif %}</td>
-            <td>{% if entry.friday %}&#10003;{% endif %}</td>
-            <td>{% if entry.saturday %}&#10003;{% endif %}</td>
-            <td>{% if entry.sunday %}&#10003;{% endif %}</td>
-            <td>{{ entry.days_exercised }}</td>
-            <td>
-                {% if not entry.submitted %}
-                <span class="badge badge-none">-</span>
-                {% elif entry.is_compliant %}
-                <span class="badge badge-compliant">Pass</span>
-                {% else %}
-                <span class="badge badge-noncompliant">Miss</span>
-                {% endif %}
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<div class="week-table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Mon</th>
+                <th>Tue</th>
+                <th>Wed</th>
+                <th>Thu</th>
+                <th>Fri</th>
+                <th>Sat</th>
+                <th>Sun</th>
+                <th>Days</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in week_data %}
+            <tr>
+                <td>{{ entry.name }}</td>
+                <td>{% if entry.monday %}<span class="day-check">&#10003;</span>{% else %}<span class="day-miss">&middot;</span>{% endif %}</td>
+                <td>{% if entry.tuesday %}<span class="day-check">&#10003;</span>{% else %}<span class="day-miss">&middot;</span>{% endif %}</td>
+                <td>{% if entry.wednesday %}<span class="day-check">&#10003;</span>{% else %}<span class="day-miss">&middot;</span>{% endif %}</td>
+                <td>{% if entry.thursday %}<span class="day-check">&#10003;</span>{% else %}<span class="day-miss">&middot;</span>{% endif %}</td>
+                <td>{% if entry.friday %}<span class="day-check">&#10003;</span>{% else %}<span class="day-miss">&middot;</span>{% endif %}</td>
+                <td>{% if entry.saturday %}<span class="day-check">&#10003;</span>{% else %}<span class="day-miss">&middot;</span>{% endif %}</td>
+                <td>{% if entry.sunday %}<span class="day-check">&#10003;</span>{% else %}<span class="day-miss">&middot;</span>{% endif %}</td>
+                <td><strong>{{ entry.days_exercised }}</strong></td>
+                <td>
+                    {% if not entry.submitted %}
+                    <span class="badge badge-none">-</span>
+                    {% elif entry.is_compliant %}
+                    <span class="badge badge-compliant">&#10003; Pass</span>
+                    {% else %}
+                    <span class="badge badge-noncompliant">&#10007; Miss</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 
-<a href="/leaderboard" class="back-link">Back to Leaderboard</a>
+<a href="/leaderboard" class="back-link">&#8592; Back to Leaderboard</a>
 {% endblock %}

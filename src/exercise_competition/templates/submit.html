@@ -1,69 +1,83 @@
 {% extends "base.html" %}
-{% block title %}Submit Exercise - Exercise Competition{% endblock %}
+{% block title %}Log Exercise - Exercise Competition{% endblock %}
 {% block content %}
-<h1>Log Your Exercise</h1>
+<h1 class="page-title">Log Your Exercise</h1>
+<p class="page-subtitle">Check off the days you hit 30+ minutes this week.</p>
 
 {% if error %}
-<div class="alert alert-error">{{ error }}</div>
+<div class="alert alert-error">&#9888; {{ error }}</div>
 {% endif %}
 
 {% if success %}
-<div class="alert alert-success">{{ success }}</div>
+<div class="alert alert-success">&#10003; {{ success }}</div>
 {% endif %}
 
-<form method="post" action="/submit">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<div class="form-card">
+    <form method="post" action="/submit">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 
-    <label for="participant_name">Who are you?</label>
-    <select name="participant_name" id="participant_name" required>
-        {% for name in participants %}
-        <option value="{{ name }}">{{ name }}</option>
-        {% endfor %}
-    </select>
-
-    <label for="week_number">Week</label>
-    <select name="week_number" id="week_number" required>
-        {% for week_num, week_label in weeks %}
-        <option value="{{ week_num }}" {% if week_num == current_week %}selected{% endif %}>
-            {{ week_label }}
-        </option>
-        {% endfor %}
-    </select>
-
-    <fieldset>
-        <legend>Days exercised (30+ minutes)</legend>
-        <div class="checkbox-grid">
-            <label class="day-checkbox">
-                <input type="checkbox" name="monday" value="true">
-                <span>Mon</span>
-            </label>
-            <label class="day-checkbox">
-                <input type="checkbox" name="tuesday" value="true">
-                <span>Tue</span>
-            </label>
-            <label class="day-checkbox">
-                <input type="checkbox" name="wednesday" value="true">
-                <span>Wed</span>
-            </label>
-            <label class="day-checkbox">
-                <input type="checkbox" name="thursday" value="true">
-                <span>Thu</span>
-            </label>
-            <label class="day-checkbox">
-                <input type="checkbox" name="friday" value="true">
-                <span>Fri</span>
-            </label>
-            <label class="day-checkbox">
-                <input type="checkbox" name="saturday" value="true">
-                <span>Sat</span>
-            </label>
-            <label class="day-checkbox">
-                <input type="checkbox" name="sunday" value="true">
-                <span>Sun</span>
-            </label>
+        <div class="form-group">
+            <label class="form-label" for="participant_name">Who are you?</label>
+            <select name="participant_name" id="participant_name" required>
+                {% for name in participants %}
+                <option value="{{ name }}">{{ name }}</option>
+                {% endfor %}
+            </select>
         </div>
-    </fieldset>
 
-    <button type="submit">Submit</button>
-</form>
+        <div class="form-group">
+            <label class="form-label" for="week_number">Week</label>
+            <select name="week_number" id="week_number" required>
+                {% for week_num, week_label in weeks %}
+                <option value="{{ week_num }}" {% if week_num == current_week %}selected{% endif %}>
+                    {{ week_label }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <fieldset>
+            <legend>Days exercised (30+ min)</legend>
+            <div class="checkbox-grid">
+                <label class="day-toggle">
+                    <input type="checkbox" name="monday" value="true">
+                    <span class="day-btn">&#127939;</span>
+                    <span class="day-label">Mon</span>
+                </label>
+                <label class="day-toggle">
+                    <input type="checkbox" name="tuesday" value="true">
+                    <span class="day-btn">&#127947;</span>
+                    <span class="day-label">Tue</span>
+                </label>
+                <label class="day-toggle">
+                    <input type="checkbox" name="wednesday" value="true">
+                    <span class="day-btn">&#128170;</span>
+                    <span class="day-label">Wed</span>
+                </label>
+                <label class="day-toggle">
+                    <input type="checkbox" name="thursday" value="true">
+                    <span class="day-btn">&#9977;</span>
+                    <span class="day-label">Thu</span>
+                </label>
+                <label class="day-toggle">
+                    <input type="checkbox" name="friday" value="true">
+                    <span class="day-btn">&#127938;</span>
+                    <span class="day-label">Fri</span>
+                </label>
+                <label class="day-toggle">
+                    <input type="checkbox" name="saturday" value="true">
+                    <span class="day-btn">&#128692;</span>
+                    <span class="day-label">Sat</span>
+                </label>
+                <label class="day-toggle">
+                    <input type="checkbox" name="sunday" value="true">
+                    <span class="day-btn">&#129336;</span>
+                    <span class="day-label">Sun</span>
+                </label>
+            </div>
+        </fieldset>
+
+        <button type="submit" class="btn-submit">Submit Week</button>
+    </form>
+</div>
 {% endblock %}
