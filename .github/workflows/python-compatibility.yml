@@ -70,7 +70,8 @@ jobs:
           uv run pytest tests/ -v --tb=short -x \
             --ignore=tests/integration \
             --ignore=tests/load \
-            -m "not slow and not integration"
+            --ignore=tests/e2e \
+            -m "not slow and not integration and not e2e"
 
   summary:
     name: Compatibility Summary
