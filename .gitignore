@@ -290,3 +290,6 @@ scripts/deploy_paramiko.py
 
 # Claude Code
 .claude/
+
+# Roast dossiers (reference material, not for distribution)
+docs/nick-roast-dossier.md
