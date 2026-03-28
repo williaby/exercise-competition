@@ -37,8 +37,8 @@ def _set_sqlite_wal(
 ) -> None:
     """Enable WAL mode and busy timeout on every new SQLite connection."""
     cursor = dbapi_connection.cursor()  # type: ignore[union-attr]
-    cursor.execute("PRAGMA journal_mode=WAL")
-    cursor.execute("PRAGMA busy_timeout=5000")
+    cursor.execute("PRAGMA journal_mode=WAL")  # NOSONAR(S2077) hardcoded SQLite PRAGMA, no user input
+    cursor.execute("PRAGMA busy_timeout=5000")  # NOSONAR(S2077) hardcoded SQLite PRAGMA, no user input
     cursor.close()
 
 
@@ -99,7 +99,7 @@ def init_db() -> None:
     Base.metadata.create_all(engine)
 
     with get_session() as session:
-        existing = session.execute(text("SELECT COUNT(*) FROM participants")).scalar()
+        existing = session.execute(text("SELECT COUNT(*) FROM participants")).scalar()  # NOSONAR(S2077) hardcoded seed check, no user input
         if existing == 0:
             for name in SEED_PARTICIPANTS:
                 session.add(Participant(name=name))
