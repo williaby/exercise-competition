@@ -100,7 +100,13 @@ jobs:
             --cov-report=term-missing \
             --junitxml=reports/junit-integration.xml \
             -o junit_family=legacy \
-            --no-cov-on-fail || true
+            --no-cov-on-fail
+          status=$?
+          if [ "$status" -eq 5 ]; then
+            echo "No integration tests collected (pytest exit code 5); continuing."
+            exit 0
+          fi
+          exit "$status"
 
       # §16.2 — Upload coverage per flag (one report per flag)
       - name: Upload unit coverage to Codecov
