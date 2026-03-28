@@ -20,18 +20,18 @@ Usage:
 
 from __future__ import annotations
 
-import logging
 import time
 from collections import defaultdict
 from typing import TYPE_CHECKING
 
+import structlog
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.httpsredirect import HTTPSRedirectMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 from starlette.responses import JSONResponse, Response
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 if TYPE_CHECKING:
     from fastapi import FastAPI, Request
@@ -58,7 +58,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     - Permissions-Policy: Restrict browser features
     """
 
-    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+    async def dispatch(
+        self, request: Request, call_next: RequestResponseEndpoint
+    ) -> Response:
         """Add security headers to response."""
         response = await call_next(request)
 
@@ -81,9 +83,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; "
             "script-src 'self'; "
-            "style-src 'self'; "
+            "style-src 'self' https://fonts.googleapis.com; "
             "img-src 'self' data: https:; "
-            "font-src 'self'; "
+            "font-src 'self' https://fonts.gstatic.com; "
             "connect-src 'self'; "
             "frame-ancestors 'none'"
         )
@@ -223,7 +225,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         return request.client.host
 
-    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+    async def dispatch(
+        self, request: Request, call_next: RequestResponseEndpoint
+    ) -> Response:
         """Apply rate limiting per IP address."""
         # Skip rate limiting for exempt paths
         if any(request.url.path.startswith(p) for p in self.EXEMPT_PREFIXES):
@@ -436,7 +440,9 @@ class SSRFPreventionMiddleware(BaseHTTPMiddleware):
 
         return False
 
-    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+    async def dispatch(
+        self, request: Request, call_next: RequestResponseEndpoint
+    ) -> Response:
         """Check for SSRF patterns in request.
 
         Validates query parameters, form data, and JSON body for potential

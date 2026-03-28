@@ -1,10 +1,12 @@
 """Competition scoring, compliance, and standings logic.
 
 Encodes the competition rules:
-- 20 weeks starting Monday 2026-03-30
-- Compliance: 2+ exercise days per week = 1 point
+- Configurable week count (default 20) starting Monday 2026-03-30
+- Compliance: configurable threshold (default 2+) exercise days per week = 1 point
 - Tiebreaker: average exercise days per submitted week
 - Streak: consecutive compliant weeks counting backward from most recent
+
+Competition parameters are driven by ``Settings`` (see ``core.config``).
 """
 
 from __future__ import annotations
@@ -21,8 +23,6 @@ if TYPE_CHECKING:
 
 COMPETITION_START = datetime.date(2026, 3, 30)
 COMPETITION_TZ = ZoneInfo("America/Chicago")
-TOTAL_WEEKS = 20
-COMPLIANCE_THRESHOLD = 2
 
 DAY_FIELDS = (
     "monday",
@@ -33,6 +33,20 @@ DAY_FIELDS = (
     "saturday",
     "sunday",
 )
+
+
+def _get_total_weeks() -> int:
+    """Return the configured total weeks from settings."""
+    from exercise_competition.core.config import settings  # noqa: PLC0415
+
+    return settings.week_max
+
+
+def _get_compliance_threshold() -> int:
+    """Return the configured compliance threshold from settings."""
+    from exercise_competition.core.config import settings  # noqa: PLC0415
+
+    return settings.compliance_threshold
 
 
 @dataclass(frozen=True)
@@ -60,7 +74,7 @@ def get_week_date_range(week: int) -> tuple[datetime.date, datetime.date]:
     """Get the start (Mon) and end (Sun) dates for a competition week.
 
     Args:
-        week: Week number (1-20).
+        week: Week number (1-based).
 
     Returns:
         Tuple of (start_date, end_date) for that week.
@@ -74,7 +88,7 @@ def get_week_label(week: int) -> str:
     """Get a display label for a competition week with date range.
 
     Args:
-        week: Week number (1-20).
+        week: Week number (1-based).
 
     Returns:
         Label like "Week 1 (3/30 - 4/5)".
@@ -84,7 +98,7 @@ def get_week_label(week: int) -> str:
 
 
 def get_current_week() -> int | None:
-    """Get the current competition week number (1-20).
+    """Get the current competition week number.
 
     Returns:
         The week number if within the competition period, or None if
@@ -95,7 +109,7 @@ def get_current_week() -> int | None:
         return None
     days_elapsed = (today - COMPETITION_START).days
     week = days_elapsed // 7 + 1
-    if week > TOTAL_WEEKS:
+    if week > _get_total_weeks():
         return None
     return week
 
@@ -115,13 +129,16 @@ def days_exercised(submission: WeeklySubmission) -> int:
 def is_compliant(submission: WeeklySubmission) -> bool:
     """Check if a submission meets the weekly compliance threshold.
 
+    The threshold is configurable via ``settings.compliance_threshold``
+    (default: 2 days).
+
     Args:
         submission: A weekly submission record.
 
     Returns:
-        True if the participant exercised 2+ days that week.
+        True if the participant met or exceeded the compliance threshold.
     """
-    return days_exercised(submission) >= COMPLIANCE_THRESHOLD
+    return days_exercised(submission) >= _get_compliance_threshold()
 
 
 def _calculate_streak(

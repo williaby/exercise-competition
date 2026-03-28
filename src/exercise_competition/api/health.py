@@ -17,9 +17,10 @@ from __future__ import annotations
 import sys
 import time
 
-import structlog
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
+
+from exercise_competition.utils.logging import get_logger
 
 router = APIRouter(prefix="/health", tags=["health"])
 
@@ -97,8 +98,8 @@ def check_database() -> ReadinessCheck:
             latency_ms=round(latency_ms, 2),
         )
     except Exception:
-        logger = structlog.get_logger()
-        logger.exception("Database readiness check failed")
+        logger = get_logger(__name__)
+        logger.exception("database_readiness_check_failed")
         latency_ms = (time.time() - start) * 1000
         return ReadinessCheck(
             name="database",

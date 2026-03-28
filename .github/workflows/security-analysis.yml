@@ -49,12 +49,19 @@ jobs:
         run: uv sync --all-extras
 
       - name: Run Bandit security scan
-        run: uv run bandit -r src/ -c pyproject.toml -f json -o bandit-report.json || true
+        id: bandit
+        run: |
+          uv run bandit -r src/ -c pyproject.toml -f json -o bandit-report.json --severity-level medium --confidence-level medium
+          # Also generate human-readable output for PR review
+          uv run bandit -r src/ -c pyproject.toml --severity-level medium --confidence-level medium
 
       - name: Run Safety dependency check
-        run: uv run safety check --output json > safety-report.json || true
+        id: safety
+        run: uv run pip-audit --format json --output safety-report.json
+        continue-on-error: true
 
       - name: Upload security reports
+        if: always()
         uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0
         with:
           name: security-reports
@@ -62,3 +69,14 @@ jobs:
             bandit-report.json
             safety-report.json
           retention-days: 30
+
+      - name: Check scan results
+        if: always()
+        run: |
+          if [[ "${{ steps.bandit.outcome }}" == "failure" ]]; then
+            echo "::error::Bandit security scan found issues"
+            exit 1
+          fi
+          if [[ "${{ steps.safety.outcome }}" == "failure" ]]; then
+            echo "::warning::Dependency audit found vulnerabilities — review safety-report.json artifact"
+          fi

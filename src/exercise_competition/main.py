@@ -35,6 +35,26 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
     logger.info("Starting exercise competition app")
     init_db()
     logger.info("Database initialized")
+
+    # Warn if HTTPS redirect is disabled and no Cloudflare tunnel env vars
+    # are set — this hints the app may be exposed without TLS termination.
+    import os  # noqa: PLC0415
+
+    _https_redirect_off = not getattr(_app, "_enable_https_redirect", True)
+    _no_tunnel_env = not os.environ.get("TUNNEL_TOKEN") and not os.environ.get(
+        "CF_TUNNEL_TOKEN"
+    )
+    if _https_redirect_off and _no_tunnel_env:
+        logger.warning(
+            "https_redirect_disabled",
+            detail=(
+                "HTTPS redirect is off and no Cloudflare tunnel env vars detected. "
+                "This is safe behind a Cloudflare tunnel but exposes traffic if "
+                "accessed directly. Set TUNNEL_TOKEN or CF_TUNNEL_TOKEN env var "
+                "to suppress this warning."
+            ),
+        )
+
     yield
     logger.info("Shutting down exercise competition app")
 

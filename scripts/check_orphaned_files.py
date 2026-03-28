@@ -72,7 +72,8 @@ def check_orphaned_files(context: dict) -> list[tuple[str, str, Path]]:
             "no",
             [
                 Path("mkdocs.yml"),
-                Path("docs"),
+                # Note: docs/ is NOT checked because projects may use it for
+                # non-MkDocs content (e.g. planning docs, ADRs).
                 Path("tools/validate_front_matter.py"),
                 Path("tools/frontmatter_contract"),
             ],
