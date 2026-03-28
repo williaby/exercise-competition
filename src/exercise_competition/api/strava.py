@@ -30,6 +30,8 @@ from exercise_competition.utils.logging import get_logger
 if TYPE_CHECKING:
     from starlette.templating import Jinja2Templates
 
+_STRAVA_AUTH_ERROR_URL = "/strava?msg=auth_error"
+
 logger = get_logger(__name__)
 
 router = APIRouter(prefix="/strava", tags=["strava"])
@@ -124,13 +126,13 @@ def strava_callback(
         logger.warning(
             "strava_callback_missing_params", code=bool(code), state=bool(state)
         )
-        return RedirectResponse(url="/strava?msg=auth_error", status_code=302)
+        return RedirectResponse(url=_STRAVA_AUTH_ERROR_URL, status_code=302)
 
     try:
         participant_id = int(state)
     except ValueError:
         logger.warning("strava_callback_invalid_state", state=state)
-        return RedirectResponse(url="/strava?msg=auth_error", status_code=302)
+        return RedirectResponse(url=_STRAVA_AUTH_ERROR_URL, status_code=302)
 
     # Validate participant exists
     with get_session() as session:
@@ -164,7 +166,7 @@ def strava_callback(
             "strava_token_exchange_failed",
             participant_id=participant_id,
         )
-        return RedirectResponse(url="/strava?msg=auth_error", status_code=302)
+        return RedirectResponse(url=_STRAVA_AUTH_ERROR_URL, status_code=302)
 
 
 # ---------------------------------------------------------------------------

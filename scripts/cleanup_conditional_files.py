@@ -103,6 +103,127 @@ def get_project_slug(context: dict) -> str:
     return context.get("project_slug", "")
 
 
+def _remove_paths(paths: list[tuple[Path, bool]], dry_run: bool) -> int:
+    """Remove a list of files and directories.
+
+    Args:
+        paths: List of (path, is_directory) tuples.
+        dry_run: If True, only report what would be removed.
+
+    Returns:
+        Number of items removed.
+    """
+    count = 0
+    for path, is_dir in paths:
+        remover = remove_dir if is_dir else remove_file
+        if remover(path, dry_run):
+            count += 1
+    return count
+
+
+def _cleanup_simple_features(context: dict, dry_run: bool) -> int:
+    """Clean up features that map to a single file removal."""
+    simple_features: list[tuple[str, Path]] = [
+        ("include_cli", Path("__SRC__/cli.py")),  # placeholder, handled in caller
+        ("include_nox", Path("noxfile.py")),
+        ("use_pre_commit", Path(".pre-commit-config.yaml")),
+        ("include_code_of_conduct", Path("CODE_OF_CONDUCT.md")),
+        ("include_security_policy", Path("SECURITY.md")),
+        ("include_contributing_guide", Path("CONTRIBUTING.md")),
+        ("include_renovate", Path("renovate.json")),
+        ("include_coderabbit", Path(".coderabbit.yaml")),
+        ("include_semantic_release", Path(".github/workflows/release.yml")),
+    ]
+    count = 0
+    for feature_key, filepath in simple_features:
+        if context.get(feature_key) == "no" and remove_file(filepath, dry_run):
+            count += 1
+    return count
+
+
+def _cleanup_mkdocs(dry_run: bool) -> int:
+    """Clean up MkDocs-related files and directories."""
+    paths: list[tuple[Path, bool]] = [
+        (Path("mkdocs.yml"), False),
+        (Path("docs"), True),
+        (Path("tools/validate_front_matter.py"), False),
+        (Path("tools/frontmatter_contract"), True),
+        (Path(".github/workflows/docs.yml"), False),
+    ]
+    return _remove_paths(paths, dry_run)
+
+
+def _cleanup_codecov(dry_run: bool) -> int:
+    """Clean up Codecov-related files."""
+    paths: list[tuple[Path, bool]] = [
+        (Path("codecov.yml"), False),
+        (Path(".github/workflows/codecov.yml"), False),
+    ]
+    return _remove_paths(paths, dry_run)
+
+
+def _cleanup_sonarcloud(dry_run: bool) -> int:
+    """Clean up SonarCloud-related files."""
+    paths: list[tuple[Path, bool]] = [
+        (Path("sonar-project.properties"), False),
+        (Path(".github/workflows/sonarcloud.yml"), False),
+    ]
+    return _remove_paths(paths, dry_run)
+
+
+def _cleanup_reuse_licensing(dry_run: bool) -> int:
+    """Clean up REUSE licensing files."""
+    paths: list[tuple[Path, bool]] = [
+        (Path("REUSE.toml"), False),
+        (Path("LICENSES"), True),
+        (Path(".github/workflows/reuse.yml"), False),
+    ]
+    return _remove_paths(paths, dry_run)
+
+
+def _cleanup_docker(dry_run: bool) -> int:
+    """Clean up Docker-related files."""
+    paths: list[tuple[Path, bool]] = [
+        (Path("Dockerfile"), False),
+        (Path("docker-compose.yml"), False),
+        (Path("docker-compose.prod.yml"), False),
+        (Path(".dockerignore"), False),
+        (Path(".github/workflows/container-security.yml"), False),
+    ]
+    return _remove_paths(paths, dry_run)
+
+
+def _cleanup_api_framework(src_dir: Path, dry_run: bool) -> int:
+    """Clean up API framework files and empty middleware directory."""
+    paths: list[tuple[Path, bool]] = [
+        (src_dir / "api", True),
+        (src_dir / "middleware" / "security.py", False),
+        (src_dir / "middleware" / "correlation.py", False),
+    ]
+    count = _remove_paths(paths, dry_run)
+
+    # Remove middleware dir if empty (only __pycache__ and __init__.py remain)
+    middleware_dir = src_dir / "middleware"
+    if middleware_dir.exists() and not any(
+        f
+        for f in middleware_dir.iterdir()
+        if f.name not in ("__pycache__", "__init__.py")
+    ):
+        if remove_dir(middleware_dir, dry_run):
+            count += 1
+    return count
+
+
+def _cleanup_fuzzing(dry_run: bool) -> int:
+    """Clean up fuzzing-related files and directories."""
+    paths: list[tuple[Path, bool]] = [
+        (Path(".github/workflows/cifuzzy.yml"), False),
+        (Path(".clusterfuzzlite"), True),
+        (Path("fuzz"), True),
+    ]
+    return _remove_paths(paths, dry_run)
+
+
 def cleanup_conditional_files(context: dict, dry_run: bool = False) -> int:
     """Remove files based on cookiecutter context settings.
 
@@ -118,164 +239,82 @@ def cleanup_conditional_files(context: dict, dry_run: bool = False) -> int:
         print("❌ Could not determine project_slug from .cruft.json")
         return 0
 
-    removed_count = 0
     src_dir = Path(f"src/{project_slug}")
+    removed_count = 0
 
     print("\n🧹 Cleaning up conditional files...")
 
-    # CLI
-    if context.get("include_cli") == "no":
-        if remove_file(src_dir / "cli.py", dry_run):
-            removed_count += 1
+    # CLI (src-relative, handled separately from simple_features)
+    if context.get("include_cli") == "no" and remove_file(src_dir / "cli.py", dry_run):
+        removed_count += 1
 
-    # MkDocs
+    # Multi-file feature cleanups
     if context.get("use_mkdocs") == "no":
-        if remove_file(Path("mkdocs.yml"), dry_run):
-            removed_count += 1
-        if remove_dir(Path("docs"), dry_run):
-            removed_count += 1
-        if remove_file(Path("tools/validate_front_matter.py"), dry_run):
-            removed_count += 1
-        if remove_dir(Path("tools/frontmatter_contract"), dry_run):
+        removed_count += _cleanup_mkdocs(dry_run)
+
+    # Simple single-file features (excluding CLI which needs src_dir)
+    simple_features: list[tuple[str, Path]] = [
+        ("include_nox", Path("noxfile.py")),
+        ("use_pre_commit", Path(".pre-commit-config.yaml")),
+        ("include_code_of_conduct", Path("CODE_OF_CONDUCT.md")),
+        ("include_security_policy", Path("SECURITY.md")),
+        ("include_contributing_guide", Path("CONTRIBUTING.md")),
+        ("include_renovate", Path("renovate.json")),
+        ("include_coderabbit", Path(".coderabbit.yaml")),
+        ("include_semantic_release", Path(".github/workflows/release.yml")),
+    ]
+    for feature_key, filepath in simple_features:
+        if context.get(feature_key) == "no" and remove_file(filepath, dry_run):
             removed_count += 1
 
-    # Nox
-    if context.get("include_nox") == "no":
-        if remove_file(Path("noxfile.py"), dry_run):
-            removed_count += 1
-
-    # Pre-commit
-    if context.get("use_pre_commit") == "no":
-        if remove_file(Path(".pre-commit-config.yaml"), dry_run):
-            removed_count += 1
-
-    # Code of Conduct
-    if context.get("include_code_of_conduct") == "no":
-        if remove_file(Path("CODE_OF_CONDUCT.md"), dry_run):
-            removed_count += 1
-
-    # Security Policy
-    if context.get("include_security_policy") == "no":
-        if remove_file(Path("SECURITY.md"), dry_run):
-            removed_count += 1
-
-    # Contributing Guide
-    if context.get("include_contributing_guide") == "no":
-        if remove_file(Path("CONTRIBUTING.md"), dry_run):
-            removed_count += 1
-
-    # Codecov
     if context.get("include_codecov") == "no":
-        if remove_file(Path("codecov.yml"), dry_run):
-            removed_count += 1
-        if remove_file(Path(".github/workflows/codecov.yml"), dry_run):
-            removed_count += 1
+        removed_count += _cleanup_codecov(dry_run)
 
-    # SonarCloud
     if context.get("include_sonarcloud") == "no":
-        if remove_file(Path("sonar-project.properties"), dry_run):
-            removed_count += 1
-        if remove_file(Path(".github/workflows/sonarcloud.yml"), dry_run):
-            removed_count += 1
+        removed_count += _cleanup_sonarcloud(dry_run)
 
-    # Renovate
-    if context.get("include_renovate") == "no":
-        if remove_file(Path("renovate.json"), dry_run):
-            removed_count += 1
-
-    # CodeRabbit
-    if context.get("include_coderabbit") == "no":
-        if remove_file(Path(".coderabbit.yaml"), dry_run):
-            removed_count += 1
-
-    # Semantic Release
-    if context.get("include_semantic_release") == "no":
-        if remove_file(Path(".github/workflows/release.yml"), dry_run):
-            removed_count += 1
-
-    # REUSE Licensing
     if context.get("use_reuse_licensing") == "no":
-        if remove_file(Path("REUSE.toml"), dry_run):
-            removed_count += 1
-        if remove_dir(Path("LICENSES"), dry_run):
-            removed_count += 1
-        if remove_file(Path(".github/workflows/reuse.yml"), dry_run):
-            removed_count += 1
+        removed_count += _cleanup_reuse_licensing(dry_run)
 
-    # Docker
     if context.get("include_docker") == "no":
-        if remove_file(Path("Dockerfile"), dry_run):
-            removed_count += 1
-        if remove_file(Path("docker-compose.yml"), dry_run):
-            removed_count += 1
-        if remove_file(Path("docker-compose.prod.yml"), dry_run):
-            removed_count += 1
-        if remove_file(Path(".dockerignore"), dry_run):
-            removed_count += 1
-        if remove_file(Path(".github/workflows/container-security.yml"), dry_run):
-            removed_count += 1
+        removed_count += _cleanup_docker(dry_run)
 
     # API Framework / Health Checks
     if context.get("include_api_framework") == "no":
-        api_dir = src_dir / "api"
-        if remove_dir(api_dir, dry_run):
-            removed_count += 1
-        if remove_file(src_dir / "middleware" / "security.py", dry_run):
-            removed_count += 1
-        if remove_file(src_dir / "middleware" / "correlation.py", dry_run):
-            removed_count += 1
-        # Remove middleware dir if empty
-        middleware_dir = src_dir / "middleware"
-        if middleware_dir.exists() and not any(
-            f
-            for f in middleware_dir.iterdir()
-            if f.name not in ("__pycache__", "__init__.py")
-        ):
-            if remove_dir(middleware_dir, dry_run):
-                removed_count += 1
-    elif context.get("include_health_checks") == "no":
-        # Only health checks disabled but API framework enabled
-        if remove_file(src_dir / "api" / "health.py", dry_run):
-            removed_count += 1
+        removed_count += _cleanup_api_framework(src_dir, dry_run)
+    elif context.get("include_health_checks") == "no" and remove_file(
+        src_dir / "api" / "health.py", dry_run
+    ):
+        removed_count += 1
 
-    # Sentry
-    if context.get("include_sentry") == "no":
-        if remove_file(src_dir / "core" / "sentry.py", dry_run):
-            removed_count += 1
+    # Src-relative single-file features
+    if context.get("include_sentry") == "no" and remove_file(
+        src_dir / "core" / "sentry.py", dry_run
+    ):
+        removed_count += 1
 
-    # Background Jobs
-    if context.get("include_background_jobs") == "no":
-        if remove_dir(src_dir / "jobs", dry_run):
-            removed_count += 1
+    if context.get("include_background_jobs") == "no" and remove_dir(
+        src_dir / "jobs", dry_run
+    ):
+        removed_count += 1
 
-    # Caching
-    if context.get("include_caching") == "no":
-        if remove_file(src_dir / "core" / "cache.py", dry_run):
-            removed_count += 1
+    if context.get("include_caching") == "no" and remove_file(
+        src_dir / "core" / "cache.py", dry_run
+    ):
+        removed_count += 1
 
-    # Load Testing
-    if context.get("include_load_testing") == "no":
-        if remove_dir(Path("tests/load"), dry_run):
-            removed_count += 1
+    if context.get("include_load_testing") == "no" and remove_dir(
+        Path("tests/load"), dry_run
+    ):
+        removed_count += 1
 
-    # Fuzzing
     if context.get("include_fuzzing") == "no":
-        if remove_file(Path(".github/workflows/cifuzzy.yml"), dry_run):
-            removed_count += 1
-        if remove_dir(Path(".clusterfuzzlite"), dry_run):
-            removed_count += 1
-        if remove_dir(Path("fuzz"), dry_run):
-            removed_count += 1
+        removed_count += _cleanup_fuzzing(dry_run)
 
-    # GitHub Actions
-    if context.get("include_github_actions") == "no":
-        if remove_dir(Path(".github"), dry_run):
-            removed_count += 1
-
-    # MkDocs workflow (separate from MkDocs files)
-    if context.get("use_mkdocs") == "no":
-        if remove_file(Path(".github/workflows/docs.yml"), dry_run):
-            removed_count += 1
+    if context.get("include_github_actions") == "no" and remove_dir(
+        Path(".github"), dry_run
+    ):
+        removed_count += 1
 
     return removed_count
 

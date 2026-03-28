@@ -37,14 +37,12 @@ LABEL org.opencontainers.image.url="https://github.com/ByronWilliamsCPA/exercise
 LABEL org.opencontainers.image.source="https://github.com/ByronWilliamsCPA/exercise-competition"
 LABEL org.opencontainers.image.licenses="MIT"
 
-# Install curl for healthcheck, then clean up
+# Install curl for healthcheck, create non-root user, then clean up
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates=20230311+deb12u1 \
     curl=7.88.1-10+deb12u14 \
-    && rm -rf /var/lib/apt/lists/*
-
-# Security: Create non-root user
-RUN groupadd -r appuser && useradd -r -g appuser -u 1000 appuser
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd -r appuser && useradd -r -g appuser -u 1000 appuser
 
 WORKDIR /app
 
@@ -54,11 +52,9 @@ COPY --from=builder --chown=appuser:appuser /app/.venv /app/.venv
 # Copy application code
 COPY --chown=appuser:appuser . .
 
-# Create data directory for SQLite with correct ownership
-RUN mkdir -p /app/data && chown appuser:appuser /app/data
-
-# Remove pip/setuptools from runtime image
-RUN pip uninstall -y pip setuptools 2>/dev/null || true
+# Create data directory for SQLite and remove pip/setuptools from runtime image
+RUN mkdir -p /app/data && chown appuser:appuser /app/data \
+    && (pip uninstall -y pip setuptools 2>/dev/null || true)
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \

@@ -22,16 +22,15 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
-permissions:
-  contents: read
-  pull-requests: write
-  checks: write
+permissions: {}
 
 jobs:
   # §15.2 — Static checks run first; tests depend on them passing
   static-checks:
     name: Static Checks (Python 3.12)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -63,6 +62,9 @@ jobs:
     name: Test (Python 3.12)
     needs: static-checks
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -152,6 +154,8 @@ jobs:
   frontend:
     name: Frontend (Node 22)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     defaults:
       run:
         working-directory: ./frontend

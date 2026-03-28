@@ -22,7 +22,7 @@ class TestLifespan:
                 from exercise_competition.main import app
 
                 with TestClient(app):
-                    pass
+                    pass  # NOSONAR — entering/exiting context triggers lifespan events
             mock_init.assert_called_once()
 
     def test_lifespan_calls_setup_logging(self) -> None:
@@ -32,7 +32,7 @@ class TestLifespan:
                 from exercise_competition.main import app
 
                 with TestClient(app):
-                    pass
+                    pass  # NOSONAR — entering/exiting context triggers lifespan events
             mock_setup.assert_called_once()
 
     def test_lifespan_logs_startup(self) -> None:

@@ -18,10 +18,6 @@ from sqlalchemy.exc import IntegrityError
 
 from exercise_competition.core.config import settings
 from exercise_competition.core.database import get_session
-from exercise_competition.utils.logging import get_logger
-
-if TYPE_CHECKING:
-    from starlette.templating import Jinja2Templates
 from exercise_competition.models import Participant, WeeklySubmission
 from exercise_competition.services.cache import standings_cache
 from exercise_competition.services.jokes import get_random_joke
@@ -31,9 +27,14 @@ from exercise_competition.services.scoring import (
     get_current_week,
     get_week_label,
 )
+from exercise_competition.utils.logging import get_logger
+
+if TYPE_CHECKING:
+    from starlette.templating import Jinja2Templates
 
 logger = get_logger(__name__)
 
+_SUBMIT_TEMPLATE = "submit.html"
 _EXPECTED_TOKEN_PARTS = 2
 
 router = APIRouter()
@@ -204,7 +205,7 @@ def submit_form(request: Request) -> HTMLResponse:
     """Render the weekly exercise submission form."""
     templates = _get_templates()
     context = _build_submit_context()
-    return templates.TemplateResponse(request, "submit.html", _ctx(context))
+    return templates.TemplateResponse(request, _SUBMIT_TEMPLATE, _ctx(context))
 
 
 @router.post("/submit", response_class=HTMLResponse, response_model=None)
@@ -230,7 +231,7 @@ def submit_exercise(
         context = _build_submit_context(
             error="Invalid form submission. Please try again.",
         )
-        return templates.TemplateResponse(request, "submit.html", _ctx(context))
+        return templates.TemplateResponse(request, _SUBMIT_TEMPLATE, _ctx(context))
 
     # Week range validation
     if week_number < settings.week_min or week_number > settings.week_max:
@@ -242,7 +243,7 @@ def submit_exercise(
         context = _build_submit_context(
             error=f"Week number must be between {settings.week_min} and {settings.week_max}.",
         )
-        return templates.TemplateResponse(request, "submit.html", _ctx(context))
+        return templates.TemplateResponse(request, _SUBMIT_TEMPLATE, _ctx(context))
 
     # Participant validation — must match a known database record
     participant_id = _validate_participant_name(participant_name)
@@ -254,7 +255,7 @@ def submit_exercise(
         context = _build_submit_context(
             error=f"Unknown participant: {participant_name}",
         )
-        return templates.TemplateResponse(request, "submit.html", _ctx(context))
+        return templates.TemplateResponse(request, _SUBMIT_TEMPLATE, _ctx(context))
 
     with get_session() as session:
         submission = WeeklySubmission(
@@ -296,7 +297,7 @@ def submit_exercise(
                 context = _build_submit_context(
                     error="An unexpected error occurred. Please try again.",
                 )
-            return templates.TemplateResponse(request, "submit.html", _ctx(context))
+            return templates.TemplateResponse(request, _SUBMIT_TEMPLATE, _ctx(context))
 
         # Invalidate leaderboard cache after successful submission
         standings_cache.invalidate()

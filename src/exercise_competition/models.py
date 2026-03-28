@@ -17,6 +17,8 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
+_PARTICIPANT_FK = "participants.id"
+
 
 class Base(DeclarativeBase):
     """Base class for all SQLAlchemy models."""
@@ -78,7 +80,7 @@ class WeeklySubmission(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     participant_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("participants.id"), nullable=False
+        Integer, ForeignKey(_PARTICIPANT_FK), nullable=False
     )
     week_number: Mapped[int] = mapped_column(Integer, nullable=False)
     monday: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -152,7 +154,7 @@ class StravaToken(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     participant_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("participants.id"), nullable=False
+        Integer, ForeignKey(_PARTICIPANT_FK), nullable=False
     )
     strava_athlete_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
     access_token: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -209,7 +211,7 @@ class StravaActivity(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     participant_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("participants.id"), nullable=False
+        Integer, ForeignKey(_PARTICIPANT_FK), nullable=False
     )
     strava_activity_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
     activity_type: Mapped[str] = mapped_column(String(50), nullable=False)

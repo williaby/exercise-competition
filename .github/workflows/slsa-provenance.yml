@@ -21,11 +21,7 @@ on:
         required: true
         type: string
 
-permissions:
-  contents: write
-  id-token: write
-  actions: read
-  attestations: write
+permissions: {}
 
 jobs:
   # ==========================================================================
@@ -34,6 +30,10 @@ jobs:
   build:
     name: Build Package
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     outputs:
       hashes: ${{ steps.hashes.outputs.hashes }}
