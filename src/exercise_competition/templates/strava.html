@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Strava Connections - Exercise Competition{% endblock %}
+{% block content %}
+<h1 class="page-title">&#9201; Strava Connections</h1>
+<p class="page-subtitle">Connect your Strava account to automatically log exercise days.</p>
+
+{% if msg == 'connected' %}
+<div class="alert alert-success">&#10003; Strava connected and activities synced!</div>
+{% elif msg == 'disconnected' %}
+<div class="alert alert-success">&#10003; Strava disconnected.</div>
+{% elif msg == 'auth_denied' %}
+<div class="alert alert-error">&#9888; Strava authorization was denied.</div>
+{% elif msg == 'auth_error' %}
+<div class="alert alert-error">&#9888; Error connecting to Strava. Please try again.</div>
+{% elif msg == 'strava_not_configured' %}
+<div class="alert alert-error">&#9888; Strava integration is not configured. Set EXERCISE_COMPETITION_STRAVA_CLIENT_ID and EXERCISE_COMPETITION_STRAVA_CLIENT_SECRET.</div>
+{% elif msg == 'sync_error' %}
+<div class="alert alert-error">&#9888; Error syncing activities. Please try again.</div>
+{% elif msg and msg.startswith('synced_') %}
+<div class="alert alert-success">&#10003; Synced {{ msg.replace('synced_', '') }} new activities!</div>
+{% endif %}
+
+{% if not strava_configured %}
+<div class="strava-info-card">
+    <p><strong>Strava is not configured yet.</strong></p>
+    <p>Set the following environment variables to enable Strava integration:</p>
+    <code>EXERCISE_COMPETITION_STRAVA_CLIENT_ID</code><br>
+    <code>EXERCISE_COMPETITION_STRAVA_CLIENT_SECRET</code>
+</div>
+{% else %}
+
+<div class="strava-info-card">
+    <p>When you connect Strava, any activity of <strong>30+ minutes</strong> will automatically check off that day in your weekly submission. Manual submissions still work too!</p>
+</div>
+
+<div class="strava-participants">
+    {% for p in participants %}
+    <div class="strava-card {% if p.strava_connected %}connected{% endif %}">
+        <div class="strava-card-info">
+            <div class="strava-card-name">{{ p.name }}</div>
+            <div class="strava-card-status">
+                {% if p.strava_connected %}
+                    <span class="strava-badge-connected">&#9989; Connected</span>
+                {% else %}
+                    <span class="strava-badge-disconnected">Not connected</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="strava-card-actions">
+            {% if p.strava_connected %}
+                <form method="post" action="/strava/sync/{{ p.id }}" style="display:inline;">
+                    <button type="submit" class="btn-strava-sync" title="Sync activities">&#128260; Sync</button>
+                </form>
+                <form method="post" action="/strava/disconnect/{{ p.id }}" style="display:inline;">
+                    <button type="submit" class="btn-strava-disconnect" title="Disconnect Strava">Disconnect</button>
+                </form>
+            {% else %}
+                <a href="/strava/connect/{{ p.id }}" class="btn-strava-connect">&#127939; Connect Strava</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if participants | selectattr('strava_connected') | list %}
+<div class="strava-sync-all">
+    <form method="post" action="/strava/sync">
+        <button type="submit" class="btn-submit">&#128260; Sync All Connected Accounts</button>
+    </form>
+</div>
+{% endif %}
+
+{% endif %}
+{% endblock %}

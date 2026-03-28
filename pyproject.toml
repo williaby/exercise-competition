@@ -32,6 +32,8 @@ dependencies = [
     "python-multipart>=0.0.18",
     "sqlalchemy>=2.0.0",
     "jinja2>=3.1.0",
+    # Strava API integration
+    "httpx>=0.27.0",
 ]
 
 # Optional dependency groups
@@ -245,6 +247,7 @@ known-first-party = ["exercise_competition"]
     "S108",   # hardcoded_tmp_directory - test temp paths are intentional
     "S311",   # random - non-crypto random in tests is fine
     "S113",   # request_without_timeout - test HTTP calls may be mocked
+    "UP017",  # Use datetime.timezone.utc for Python 3.10 compatibility
 ]
 
 # Scripts (utility code - not packages)
@@ -299,6 +302,17 @@ known-first-party = ["exercise_competition"]
     "C901",   # Complexity allowed in utility scripts
     "ANN", "D", "TRY", "PLR",
     "INP",    # Not packages
+]
+
+# Strava integration routes
+"src/*/api/strava.py" = [
+    "PLC0415", # Local imports to avoid circular dependencies
+]
+
+# Strava service - HTTP client and external API interactions
+"src/*/services/strava.py" = [
+    "PLC0415", # Local imports within functions
+    "UP017",   # Use datetime.timezone.utc for Python 3.10 compatibility
 ]
 
 # API health checks - Example code with template patterns

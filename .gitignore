@@ -1,3 +1,6 @@
+# PR deferred items (local tracking only)
+pr2-deferred-items.md
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

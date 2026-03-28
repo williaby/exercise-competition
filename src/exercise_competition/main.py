@@ -15,6 +15,7 @@ from starlette.templating import Jinja2Templates
 
 from exercise_competition.api.health import router as health_router
 from exercise_competition.api.routes import router as app_router
+from exercise_competition.api.strava import router as strava_router
 from exercise_competition.core.config import settings
 from exercise_competition.core.database import init_db
 from exercise_competition.middleware.correlation import CorrelationMiddleware
@@ -82,6 +83,7 @@ app.add_middleware(CorrelationMiddleware)
 # Routers
 app.include_router(health_router)
 app.include_router(app_router)
+app.include_router(strava_router)
 
 # Static files and templates
 if STATIC_DIR.exists():
