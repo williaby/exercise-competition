@@ -43,6 +43,7 @@ dev = [
     "pytest-cov>=4.1.0",
     "pytest-asyncio>=0.21.0",
     "pytest-xdist>=3.3.0",
+    "pytest-playwright>=0.7.2",
     "hypothesis>=6.82.0",
 
     # Code Quality (always included)
@@ -430,6 +431,7 @@ markers = [
     "integration: marks tests as integration tests",
     "unit: marks tests as unit tests",
     "benchmark: marks tests as benchmark tests",
+    "security: marks security-focused tests",
     "py310: marks tests specific to Python 3.10",
     "py311plus: marks tests requiring Python 3.11+",
     "py313plus: marks tests requiring Python 3.13+ (PEP 594 removals)",
@@ -575,8 +577,7 @@ ignore_names = [
 
 # UV Configuration
 [tool.uv]
-# Note: UV now recommends using [dependency-groups] instead of dev-dependencies
-# We use [project.optional-dependencies] for dev dependencies (PEP 621 standard)
+
 
 # Package Index Configuration
 # Using default PyPI. Enable supply chain security for Google Assured OSS integration.

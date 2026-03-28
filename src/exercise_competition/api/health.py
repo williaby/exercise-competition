@@ -17,6 +17,7 @@ from __future__ import annotations
 import sys
 import time
 
+import structlog
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
 
@@ -55,7 +56,6 @@ class ReadinessStatus(HealthStatus):
 
 @router.get(
     "/live",
-    response_model=HealthStatus,
     status_code=status.HTTP_200_OK,
     summary="Liveness probe",
     description="Indicates if the application is running. Used by Kubernetes liveness probe.",
@@ -91,24 +91,25 @@ def check_database() -> ReadinessCheck:
             session.execute(text("SELECT 1"))
 
         latency_ms = (time.time() - start) * 1000
-        return ReadinessCheck(
+        return ReadinessCheck(  # type: ignore[reportCallIssue]
             name="database",
             status=True,
             latency_ms=round(latency_ms, 2),
         )
-    except Exception as e:
+    except Exception:
+        logger = structlog.get_logger()
+        logger.exception("Database readiness check failed")
         latency_ms = (time.time() - start) * 1000
         return ReadinessCheck(
             name="database",
             status=False,
             latency_ms=round(latency_ms, 2),
-            error=str(e),
+            error="Database connectivity check failed",
         )
 
 
 @router.get(
     "/ready",
-    response_model=ReadinessStatus,
     responses={
         200: {"description": "Application is ready to serve traffic"},
         503: {"description": "Application is not ready (dependencies unavailable)"},
@@ -153,7 +154,6 @@ def readiness() -> ReadinessStatus:
 
 @router.get(
     "/startup",
-    response_model=HealthStatus,
     status_code=status.HTTP_200_OK,
     summary="Startup probe",
     description="Indicates if the application has completed startup. Used by Kubernetes startup probe.",
@@ -177,7 +177,6 @@ async def startup() -> HealthStatus:
 
 @router.get(
     "/",
-    response_model=HealthStatus,
     status_code=status.HTTP_200_OK,
     summary="Basic health check",
     description="Simple health check endpoint for load balancers and monitoring.",

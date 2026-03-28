@@ -26,6 +26,38 @@ BENCHMARKS_DIR = PROJECT_ROOT / "data" / "benchmarks"
 # ============================================================================
 
 
+def pytest_addoption(parser: pytest.Parser) -> None:
+    """Add custom CLI options."""
+    parser.addoption(
+        "--run-e2e",
+        action="store_true",
+        default=False,
+        help="Include Playwright E2E browser tests (runs in subprocess server)",
+    )
+
+
+_E2E_PATH_MARKER = "/e2e/"
+
+
+def _is_e2e(item: pytest.Item) -> bool:
+    return _E2E_PATH_MARKER in str(item.fspath)
+
+
+def pytest_collection_modifyitems(
+    config: pytest.Config, items: list[pytest.Item]
+) -> None:
+    """Exclude E2E tests unless --run-e2e is passed, and run them last."""
+    if config.getoption("--run-e2e"):
+        # Keep all tests, but ensure E2E runs after async unit tests
+        # to avoid event loop conflicts between Playwright and pytest-asyncio
+        e2e = [item for item in items if _is_e2e(item)]
+        non_e2e = [item for item in items if not _is_e2e(item)]
+        items[:] = non_e2e + e2e
+    else:
+        # Exclude E2E entirely (default — fast feedback loop)
+        items[:] = [item for item in items if not _is_e2e(item)]
+
+
 def pytest_configure(config: pytest.Config) -> None:
     """Register custom pytest markers for test pyramid.
 
@@ -155,3 +187,25 @@ def setup_logging() -> None:
     from exercise_competition.utils.logging import setup_logging
 
     setup_logging(level="DEBUG", json_logs=False, include_timestamp=False)
+
+
+def _find_rate_limiter():
+    """Walk the middleware chain to find the RateLimitMiddleware instance."""
+    from exercise_competition.main import app
+    from exercise_competition.middleware.security import RateLimitMiddleware
+
+    mw = app.middleware_stack
+    while mw is not None:
+        if isinstance(mw, RateLimitMiddleware):
+            return mw
+        mw = getattr(mw, "app", None)
+    return None
+
+
+@pytest.fixture(autouse=True)
+def _reset_rate_limiter():
+    """Reset rate limiter state between tests to prevent cross-test interference."""
+    yield
+    limiter = _find_rate_limiter()
+    if limiter is not None:
+        limiter.requests.clear()

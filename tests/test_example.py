@@ -146,7 +146,6 @@ class TestLogging:
         assert call_args[1]["extra_metric"] == 42
 
 
-
 class TestLoggingJSON:
     """Test JSON logging configuration.
 

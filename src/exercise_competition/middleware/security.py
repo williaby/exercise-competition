@@ -35,6 +35,7 @@ logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from fastapi import FastAPI, Request
+    from starlette.middleware.base import RequestResponseEndpoint
     from starlette.types import ASGIApp
 
 
@@ -57,7 +58,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     - Permissions-Policy: Restrict browser features
     """
 
-    async def dispatch(self, request: Request, call_next) -> Response:
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         """Add security headers to response."""
         response = await call_next(request)
 
@@ -80,7 +81,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; "
             "script-src 'self'; "
-            "style-src 'self' 'unsafe-inline'; "
+            "style-src 'self'; "
             "img-src 'self' data: https:; "
             "font-src 'self'; "
             "connect-src 'self'; "
@@ -96,7 +97,8 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         )
 
         # Remove server identification (OWASP A09)
-        response.headers.pop("Server", None)
+        if "Server" in response.headers:
+            del response.headers["Server"]
 
         return response
 
@@ -177,20 +179,57 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             )
             self.requests = defaultdict(
                 list,
-                {
-                    ip: timestamps
-                    for ip, timestamps in sorted_ips[: self.max_tracked_ips]
-                },
+                dict(sorted_ips[: self.max_tracked_ips]),
             )
 
-    async def dispatch(self, request: Request, call_next) -> Response:
-        """Apply rate limiting per IP address."""
+    # Paths exempt from rate limiting (health probes)
+    EXEMPT_PREFIXES: tuple[str, ...] = ("/health/",)
+
+    # Trusted proxy headers in priority order.
+    # CF-Connecting-IP: Cloudflare's real client IP header
+    # X-Real-IP: Common reverse proxy header (nginx default)
+    # X-Forwarded-For: Standard proxy header (first entry = original client)
+    _TRUSTED_IP_HEADERS: tuple[str, ...] = (
+        "CF-Connecting-IP",
+        "X-Real-IP",
+        "X-Forwarded-For",
+    )
+
+    @staticmethod
+    def _get_client_ip(request: Request) -> str:
+        """Extract the real client IP from proxy headers or direct connection.
+
+        Checks Cloudflare, nginx, and standard proxy headers before falling
+        back to the direct connection IP. For X-Forwarded-For, uses the first
+        (leftmost) entry which is the original client.
+
+        Args:
+            request: The incoming HTTP request.
+
+        Returns:
+            Client IP address string, or "unknown" if not determinable.
+        """
+        for header in RateLimitMiddleware._TRUSTED_IP_HEADERS:
+            if value := request.headers.get(header):
+                # X-Forwarded-For may contain multiple IPs: client, proxy1, proxy2
+                return value.split(",")[0].strip()
+
         if request.client is None:
             logger.warning(
                 "request.client is None - cannot determine client IP for rate limiting. "
-                "Using 'unknown' as fallback. This may occur during testing or with certain proxy configurations."
+                "Using 'unknown' as fallback."
             )
-        client_ip = request.client.host if request.client else "unknown"
+            return "unknown"
+
+        return request.client.host
+
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        """Apply rate limiting per IP address."""
+        # Skip rate limiting for exempt paths
+        if any(request.url.path.startswith(p) for p in self.EXEMPT_PREFIXES):
+            return await call_next(request)
+
+        client_ip = self._get_client_ip(request)
         current_time = time.time()
 
         # Periodic cleanup to prevent memory leaks
@@ -397,7 +436,7 @@ class SSRFPreventionMiddleware(BaseHTTPMiddleware):
 
         return False
 
-    async def dispatch(self, request: Request, call_next) -> Response:
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         """Check for SSRF patterns in request.
 
         Validates query parameters, form data, and JSON body for potential
@@ -464,17 +503,6 @@ def add_security_middleware(
             allowed_hosts=allowed_hosts,
         )
 
-    # CORS configuration (OWASP A05)
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=allowed_origins or [],
-        allow_credentials=True,
-        allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
-        allow_headers=["*"],
-        expose_headers=["X-Request-ID"],
-        max_age=3600,
-    )
-
     # Security headers (OWASP A05, A03, A09)
     app.add_middleware(SecurityHeadersMiddleware)
 
@@ -483,39 +511,20 @@ def add_security_middleware(
         app.add_middleware(
             RateLimitMiddleware,
             requests_per_minute=rate_limit_rpm,
-            burst_size=10,
+            burst_size=30,
         )
 
     # SSRF prevention (OWASP A10)
     if enable_ssrf_prevention:
         app.add_middleware(SSRFPreventionMiddleware)
 
-
-# Example usage in main.py:
-"""
-from fastapi import FastAPI
-from exercise_competition.middleware.security import add_security_middleware
-
-app = FastAPI()
-
-# Add all security middleware
-add_security_middleware(
-    app,
-    enable_https_redirect=True,  # Production only
-    enable_rate_limiting=True,
-    allowed_origins=[
-        "https://example.com",
-        "https://app.example.com",
-    ],
-    allowed_hosts=[
-        "api.example.com",
-        "localhost",  # Development only
-    ],
-    rate_limit_rpm=100,
-)
-
-# Your routes here
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
-"""
+    # CORS configuration (OWASP A05) — added last so it wraps outermost
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=allowed_origins or [],
+        allow_credentials=False,
+        allow_methods=["GET", "POST"],
+        allow_headers=["Content-Type", "X-Correlation-ID"],
+        expose_headers=["X-Request-ID"],
+        max_age=3600,
+    )

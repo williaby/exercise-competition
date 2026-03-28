@@ -5,10 +5,7 @@ from __future__ import annotations
 import datetime
 from unittest.mock import patch
 
-import pytest
-
 from exercise_competition.services.scoring import (
-    COMPETITION_START,
     COMPETITION_TZ,
     Standing,
     _calculate_streak,
@@ -106,8 +103,13 @@ class TestDaysExercised:
 
     def test_all_seven_days(self):
         sub = FakeSubmission(
-            monday=True, tuesday=True, wednesday=True, thursday=True,
-            friday=True, saturday=True, sunday=True,
+            monday=True,
+            tuesday=True,
+            wednesday=True,
+            thursday=True,
+            friday=True,
+            saturday=True,
+            sunday=True,
         )
         assert days_exercised(sub) == 7
 
@@ -209,12 +211,17 @@ class TestCalculateStandings:
         subs = [
             # Both compliant week 1, but Alice has more days
             FakeSubmission(
-                participant_id=1, week_number=1,
-                monday=True, tuesday=True, wednesday=True,
+                participant_id=1,
+                week_number=1,
+                monday=True,
+                tuesday=True,
+                wednesday=True,
             ),
             FakeSubmission(
-                participant_id=2, week_number=1,
-                monday=True, tuesday=True,
+                participant_id=2,
+                week_number=1,
+                monday=True,
+                tuesday=True,
             ),
         ]
         standings = calculate_standings(subs, participants)
@@ -227,13 +234,20 @@ class TestCalculateStandings:
         participants = [(1, "Alice")]
         subs = [
             FakeSubmission(
-                participant_id=1, week_number=1,
-                monday=True, tuesday=True, wednesday=True,
+                participant_id=1,
+                week_number=1,
+                monday=True,
+                tuesday=True,
+                wednesday=True,
             ),
             FakeSubmission(
-                participant_id=1, week_number=3,
-                monday=True, tuesday=True, wednesday=True,
-                thursday=True, friday=True,
+                participant_id=1,
+                week_number=3,
+                monday=True,
+                tuesday=True,
+                wednesday=True,
+                thursday=True,
+                friday=True,
             ),
         ]
         standings = calculate_standings(subs, participants)
@@ -243,8 +257,12 @@ class TestCalculateStandings:
 
     def test_standing_dataclass(self):
         s = Standing(
-            participant_id=1, name="Test", points=5,
-            avg_days=3.5, streak=3, weeks_submitted=5,
+            participant_id=1,
+            name="Test",
+            points=5,
+            avg_days=3.5,
+            streak=3,
+            weeks_submitted=5,
         )
         assert s.participant_id == 1
         assert s.name == "Test"

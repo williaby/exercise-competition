@@ -6,7 +6,7 @@ import tempfile
 from pathlib import Path
 
 import pytest
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -71,9 +71,9 @@ class TestParticipant:
         assert "Participant" in repr(p)
 
     def test_participant_submissions_relationship(self, seeded_session):
-        participant = seeded_session.query(Participant).filter_by(
-            name="Byron Williams"
-        ).first()
+        participant = (
+            seeded_session.query(Participant).filter_by(name="Byron Williams").first()
+        )
         assert participant is not None
         assert participant.submissions == []
 
@@ -289,9 +289,9 @@ class TestWeeklySubmission:
         assert "days=2" in r
 
     def test_submission_relationship_to_participant(self, seeded_session):
-        participant = seeded_session.query(Participant).filter_by(
-            name="Byron Williams"
-        ).first()
+        participant = (
+            seeded_session.query(Participant).filter_by(name="Byron Williams").first()
+        )
         sub = WeeklySubmission(
             participant_id=participant.id,
             week_number=1,
@@ -310,18 +310,19 @@ class TestDatabaseInit:
     """Tests for database initialization and seeding."""
 
     def test_init_db_creates_tables_and_seeds(self):
+        from exercise_competition.core.config import Settings
         from exercise_competition.core.database import (
             get_engine,
             init_db,
             reset_engine,
         )
-        from exercise_competition.core.config import Settings
 
         # Use a temp file for this test
         with tempfile.TemporaryDirectory() as tmpdir:
             db_path = Path(tmpdir) / "test.db"
             # Monkey-patch settings
             import exercise_competition.core.database as db_module
+
             original_settings = db_module.settings
             db_module.settings = Settings(
                 database_url=f"sqlite:///{db_path}",
@@ -344,16 +345,17 @@ class TestDatabaseInit:
                 db_module.settings = original_settings
 
     def test_init_db_idempotent(self):
+        from exercise_competition.core.config import Settings
         from exercise_competition.core.database import (
             get_engine,
             init_db,
             reset_engine,
         )
-        from exercise_competition.core.config import Settings
 
         with tempfile.TemporaryDirectory() as tmpdir:
             db_path = Path(tmpdir) / "test.db"
             import exercise_competition.core.database as db_module
+
             original_settings = db_module.settings
             db_module.settings = Settings(
                 database_url=f"sqlite:///{db_path}",

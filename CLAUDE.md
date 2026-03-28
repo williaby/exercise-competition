@@ -37,11 +37,15 @@ leaderboard, scoring logic.
 uv sync --all-extras
 uv run pre-commit install
 
-# Run tests
-uv run pytest -v                                    # all tests
+# Run tests (unit + integration; e2e excluded by default)
+uv run pytest -v                                    # unit + integration
 uv run pytest tests/unit/test_exceptions.py -v      # single file
 uv run pytest -k "test_function_name" -v            # single test
 uv run pytest --cov=src --cov-report=term-missing   # with coverage
+
+# E2E tests (Playwright — requires: uv run playwright install chromium)
+uv run pytest --run-e2e -v                          # all tests including E2E
+uv run pytest tests/e2e/ -v --no-cov               # E2E only (separate session)
 
 # Code quality
 uv run ruff format .              # format

@@ -7,24 +7,29 @@ Templates are imported via helper to avoid circular imports with main.py.
 from __future__ import annotations
 
 import hashlib
+import os
 import secrets
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Annotated
 
-from fastapi import APIRouter, Form, Query, Request
+from fastapi import APIRouter, Form, Path, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.exc import IntegrityError
 
 from exercise_competition.core.database import get_session
+from exercise_competition.utils.logging import get_logger
 
 if TYPE_CHECKING:
     from starlette.templating import Jinja2Templates
 from exercise_competition.models import Participant, WeeklySubmission
+from exercise_competition.services.jokes import get_random_joke
 from exercise_competition.services.scoring import (
     calculate_standings,
     get_current_week,
     get_week_label,
 )
+
+logger = get_logger(__name__)
 
 _WEEK_MIN = 1
 _WEEK_MAX = 20
@@ -32,8 +37,8 @@ _EXPECTED_TOKEN_PARTS = 2
 
 router = APIRouter()
 
-# Simple CSRF: per-process secret, tokens valid for 1 hour
-_CSRF_SECRET = secrets.token_hex(32)
+# CSRF secret: prefer env var for multi-worker consistency, fallback to per-process
+_CSRF_SECRET = os.environ.get("CSRF_SECRET") or secrets.token_hex(32)
 _CSRF_TTL = 3600
 
 
@@ -48,7 +53,7 @@ def _generate_csrf_token() -> str:
     """Generate a time-limited CSRF token."""
     timestamp = str(int(time.time()))
     raw = f"{_CSRF_SECRET}:{timestamp}"
-    sig = hashlib.sha256(raw.encode()).hexdigest()[:16]
+    sig = hashlib.sha256(raw.encode()).hexdigest()[:32]
     return f"{timestamp}:{sig}"
 
 
@@ -65,7 +70,7 @@ def _validate_csrf_token(token: str) -> bool:
     if time.time() - timestamp > _CSRF_TTL:
         return False
     expected_raw = f"{_CSRF_SECRET}:{timestamp_str}"
-    expected_sig = hashlib.sha256(expected_raw.encode()).hexdigest()[:16]
+    expected_sig = hashlib.sha256(expected_raw.encode()).hexdigest()[:32]
     return secrets.compare_digest(sig, expected_sig)
 
 
@@ -104,16 +109,16 @@ def submit_form(request: Request) -> HTMLResponse:
 @router.post("/submit", response_class=HTMLResponse, response_model=None)
 def submit_exercise(
     request: Request,
-    csrf_token: str = Form(...),
-    participant_name: str = Form(...),
-    week_number: int = Form(...),
-    monday: bool = Form(default=False),
-    tuesday: bool = Form(default=False),
-    wednesday: bool = Form(default=False),
-    thursday: bool = Form(default=False),
-    friday: bool = Form(default=False),
-    saturday: bool = Form(default=False),
-    sunday: bool = Form(default=False),
+    csrf_token: Annotated[str, Form()],
+    participant_name: Annotated[str, Form(max_length=100)],
+    week_number: Annotated[int, Form()],
+    monday: Annotated[bool, Form()] = False,
+    tuesday: Annotated[bool, Form()] = False,
+    wednesday: Annotated[bool, Form()] = False,
+    thursday: Annotated[bool, Form()] = False,
+    friday: Annotated[bool, Form()] = False,
+    saturday: Annotated[bool, Form()] = False,
+    sunday: Annotated[bool, Form()] = False,
 ) -> HTMLResponse | RedirectResponse:
     """Process a weekly exercise submission."""
     templates = _get_templates()
@@ -157,11 +162,25 @@ def submit_exercise(
             session.commit()
         except IntegrityError:
             session.rollback()
+            logger.warning(
+                "duplicate_submission_rejected",
+                participant=participant_name,
+                week_number=week_number,
+            )
             return _render_submit_with_error(
                 request,
                 templates,
                 f"{participant_name} has already submitted for week {week_number}.",
             )
+
+        logger.info(
+            "exercise_submitted",
+            participant=participant_name,
+            participant_id=participant.id,
+            week_number=week_number,
+            days_exercised=submission.days_exercised,
+            is_compliant=submission.is_compliant,
+        )
 
     return RedirectResponse(url="/leaderboard?msg=success", status_code=303)
 
@@ -196,7 +215,7 @@ def _render_submit_with_error(
 @router.get("/leaderboard", response_class=HTMLResponse)
 def leaderboard(
     request: Request,
-    msg: str | None = Query(None),
+    msg: Annotated[str | None, Query(max_length=20, pattern=r"^[a-z]+$")] = None,
 ) -> HTMLResponse:
     """Render the competition leaderboard."""
     templates = _get_templates()
@@ -217,6 +236,7 @@ def leaderboard(
             "standings": standings,
             "current_week": current_week,
             "success": success_msg,
+            "joke": get_random_joke(),
         },
     )
 
@@ -224,7 +244,7 @@ def leaderboard(
 @router.get("/week/{week_number}", response_class=HTMLResponse)
 def week_view(
     request: Request,
-    week_number: int,
+    week_number: Annotated[int, Path(ge=_WEEK_MIN, le=_WEEK_MAX)],
 ) -> HTMLResponse:
     """Show all submissions for a specific week."""
     templates = _get_templates()

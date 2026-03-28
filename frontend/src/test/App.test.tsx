@@ -10,12 +10,12 @@ vi.mock('@/components/ApiStatus', () => ({
 describe('App', () => {
   it('renders the project name', () => {
     render(<App />)
-    expect(screen.getByText('{{ cookiecutter.project_name }}')).toBeInTheDocument()
+    expect(screen.getByText('Exercise Competition')).toBeInTheDocument()
   })
 
   it('renders the project description', () => {
     render(<App />)
-    expect(screen.getByText('{{ cookiecutter.project_short_description }}')).toBeInTheDocument()
+    expect(screen.getByText('Weekly exercise competition tracker for the Williams brothers')).toBeInTheDocument()
   })
 
   it('renders the counter button', () => {

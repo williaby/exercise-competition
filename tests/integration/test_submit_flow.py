@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-import tempfile
-from pathlib import Path
-
 import pytest
 from fastapi.testclient import TestClient
 
@@ -155,6 +152,15 @@ class TestLeaderboard:
         assert response.status_code == 200
         assert "Byron Williams" in response.text
         assert "Leaderboard" in response.text
+
+    def test_leaderboard_shows_joke(self, client):
+        from markupsafe import escape
+
+        from exercise_competition.services.jokes import NICK_JOKES
+
+        response = client.get("/leaderboard")
+        assert response.status_code == 200
+        assert any(str(escape(joke)) in response.text for joke in NICK_JOKES)
 
     def test_leaderboard_success_message(self, client):
         response = client.get("/leaderboard?msg=success")

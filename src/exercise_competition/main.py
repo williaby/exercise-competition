@@ -15,8 +15,10 @@ from starlette.templating import Jinja2Templates
 
 from exercise_competition.api.health import router as health_router
 from exercise_competition.api.routes import router as app_router
+from exercise_competition.core.config import settings
 from exercise_competition.core.database import init_db
 from exercise_competition.middleware.correlation import CorrelationMiddleware
+from exercise_competition.middleware.security import add_security_middleware
 from exercise_competition.utils.logging import get_logger, setup_logging
 
 logger = get_logger(__name__)
@@ -45,6 +47,16 @@ app = FastAPI(
 )
 
 # Middleware
+# HTTPS redirect is disabled because Cloudflare Zero Trust terminates TLS.
+# Traffic from Cloudflare to origin travels through a secure tunnel, so
+# the origin only sees HTTP. Enabling redirect here would cause a loop.
+add_security_middleware(
+    app,
+    enable_https_redirect=False,
+    enable_rate_limiting=True,
+    enable_ssrf_prevention=True,
+    rate_limit_rpm=settings.rate_limit_rpm,
+)
 app.add_middleware(CorrelationMiddleware)
 
 # Routers

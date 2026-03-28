@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     json_logs: bool = False
     include_timestamp: bool = True
     database_url: str = "sqlite:///data/competition.db"
+    rate_limit_rpm: int = 60
 
 
 # A single, global instance of the settings

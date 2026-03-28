@@ -271,6 +271,24 @@ tr.leader:hover {
     color: #fff;
 }
 
+/* Joke banner */
+.joke-banner {
+    margin-top: 2rem;
+    padding: 1rem 1.25rem;
+    background: #fff;
+    border-left: 4px solid #16213e;
+    border-radius: 0 8px 8px 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    font-style: italic;
+    color: #555;
+    text-align: center;
+}
+
+.joke-banner p {
+    margin: 0;
+    line-height: 1.5;
+}
+
 .back-link {
     display: inline-block;
     margin-top: 1.5rem;

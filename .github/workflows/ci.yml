@@ -58,7 +58,7 @@ jobs:
       - name: Run security scan (Bandit)
         run: uv run bandit -r src/ -c pyproject.toml
 
-frontend:
+  frontend:
     name: Frontend (Node 22)
     runs-on: ubuntu-latest
     defaults:
