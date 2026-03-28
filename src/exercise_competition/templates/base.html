@@ -4,15 +4,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Exercise Competition{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <nav>
-        <a href="/leaderboard">Leaderboard</a>
-        <a href="/submit">Submit</a>
-    </nav>
+    <header class="site-header">
+        <div class="header-inner">
+            <a href="/leaderboard" class="site-brand">
+                <span class="brand-icon">&#127941;</span>
+                <div>
+                    <div class="brand-text">Williams Bros</div>
+                    <div class="brand-sub">Exercise Competition</div>
+                </div>
+            </a>
+            <nav>
+                <a href="/leaderboard" {% if request.url.path == '/leaderboard' %}class="active"{% endif %}>Leaderboard</a>
+                <a href="/submit" {% if request.url.path == '/submit' %}class="active"{% endif %}>Log Exercise</a>
+            </nav>
+        </div>
+    </header>
+
     <main>
         {% block content %}{% endblock %}
     </main>
+
+    <footer class="site-footer">
+        Built with stubbornness and sibling rivalry &middot; <a href="https://nick-loses.williamshome.family">nick-loses.williamshome.family</a>
+    </footer>
 </body>
 </html>
