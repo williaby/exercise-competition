@@ -56,6 +56,33 @@ class Standing:
     weeks_submitted: int
 
 
+def get_week_date_range(week: int) -> tuple[datetime.date, datetime.date]:
+    """Get the start (Mon) and end (Sun) dates for a competition week.
+
+    Args:
+        week: Week number (1-20).
+
+    Returns:
+        Tuple of (start_date, end_date) for that week.
+    """
+    start = COMPETITION_START + datetime.timedelta(weeks=week - 1)
+    end = start + datetime.timedelta(days=6)
+    return start, end
+
+
+def get_week_label(week: int) -> str:
+    """Get a display label for a competition week with date range.
+
+    Args:
+        week: Week number (1-20).
+
+    Returns:
+        Label like "Week 1 (3/30 - 4/5)".
+    """
+    start, end = get_week_date_range(week)
+    return f"Week {week} ({start.month}/{start.day} - {end.month}/{end.day})"
+
+
 def get_current_week() -> int | None:
     """Get the current competition week number (1-20).
 

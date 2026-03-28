@@ -23,9 +23,9 @@
 
     <label for="week_number">Week</label>
     <select name="week_number" id="week_number" required>
-        {% for week in weeks %}
-        <option value="{{ week }}" {% if week == current_week %}selected{% endif %}>
-            Week {{ week }}
+        {% for week_num, week_label in weeks %}
+        <option value="{{ week_num }}" {% if week_num == current_week %}selected{% endif %}>
+            {{ week_label }}
         </option>
         {% endfor %}
     </select>

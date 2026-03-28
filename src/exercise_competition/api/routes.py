@@ -23,6 +23,7 @@ from exercise_competition.models import Participant, WeeklySubmission
 from exercise_competition.services.scoring import (
     calculate_standings,
     get_current_week,
+    get_week_label,
 )
 
 _WEEK_MIN = 1
@@ -91,7 +92,7 @@ def submit_form(request: Request) -> HTMLResponse:
         "submit.html",
         {
             "participants": participant_names,
-            "weeks": list(range(1, 21)),
+            "weeks": [(w, get_week_label(w)) for w in range(1, 21)],
             "current_week": current_week or 1,
             "csrf_token": csrf_token,
             "error": None,
@@ -183,7 +184,7 @@ def _render_submit_with_error(
         "submit.html",
         {
             "participants": participant_names,
-            "weeks": list(range(1, 21)),
+            "weeks": [(w, get_week_label(w)) for w in range(1, 21)],
             "current_week": current_week or 1,
             "csrf_token": csrf_token,
             "error": error,
