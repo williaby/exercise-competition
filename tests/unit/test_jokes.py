@@ -24,6 +24,10 @@ class TestJokes:
             assert isinstance(joke, str)
             assert len(joke.strip()) > 0
 
+    def test_nick_jokes_are_unique(self) -> None:
+        """No duplicate jokes — duplicates would skew random.choice weighting."""
+        assert len(NICK_JOKES) == len(set(NICK_JOKES))
+
     def test_randomness_produces_variety(self) -> None:
         """Multiple calls should eventually return different jokes."""
         results = {get_random_joke() for _ in range(50)}
