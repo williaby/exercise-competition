@@ -299,7 +299,7 @@ class TestCorrelationMiddleware:
         mock_response = MagicMock(spec=["headers"])
         mock_response.headers = {}
 
-        async def mock_call_next(request):
+        async def mock_call_next(request):  # NOSONAR(S7503) must be async; middleware awaits this
             return mock_response
 
         response = await middleware.dispatch(mock_request, mock_call_next)
@@ -326,7 +326,7 @@ class TestCorrelationMiddleware:
         mock_response = MagicMock(spec=["headers"])
         mock_response.headers = {}
 
-        async def mock_call_next(request):
+        async def mock_call_next(request):  # NOSONAR(S7503) must be async; middleware awaits this
             return mock_response
 
         response = await middleware.dispatch(mock_request, mock_call_next)
@@ -352,7 +352,7 @@ class TestCorrelationMiddleware:
         mock_response = MagicMock(spec=["headers"])
         mock_response.headers = {}
 
-        async def mock_call_next(request):
+        async def mock_call_next(request):  # NOSONAR(S7503) must be async; middleware awaits this
             return mock_response
 
         response = await middleware.dispatch(mock_request, mock_call_next)
@@ -377,7 +377,7 @@ class TestCorrelationMiddleware:
         mock_response = MagicMock(spec=["headers"])
         mock_response.headers = {}
 
-        async def mock_call_next(request):
+        async def mock_call_next(request):  # NOSONAR(S7503) must be async; middleware awaits this
             return mock_response
 
         response = await middleware.dispatch(mock_request, mock_call_next)
@@ -401,7 +401,7 @@ class TestCorrelationMiddleware:
         mock_response = MagicMock(spec=["headers"])
         mock_response.headers = {}
 
-        async def mock_call_next(request):
+        async def mock_call_next(request):  # NOSONAR(S7503) must be async; middleware awaits this
             return mock_response
 
         response = await middleware.dispatch(mock_request, mock_call_next)
@@ -425,7 +425,7 @@ class TestCorrelationMiddleware:
         mock_response = MagicMock(spec=["headers"])
         mock_response.headers = {}
 
-        async def mock_call_next(request):
+        async def mock_call_next(request):  # NOSONAR(S7503) must be async; middleware awaits this
             return mock_response
 
         response = await middleware.dispatch(mock_request, mock_call_next)
@@ -445,7 +445,7 @@ class TestCorrelationMiddleware:
         mock_request = MagicMock(spec=["headers"])
         mock_request.headers = {"X-Correlation-ID": "test-corr"}
 
-        async def mock_call_next_error(request):
+        async def mock_call_next_error(request):  # NOSONAR(S7503) must be async; middleware awaits this
             raise ValueError("Test error")
 
         with pytest.raises(ValueError, match="Test error"):

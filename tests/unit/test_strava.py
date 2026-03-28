@@ -198,7 +198,7 @@ class TestStravaActivityModel:
         )
         seeded_session.add(activity)
         seeded_session.commit()
-        assert activity.duration_minutes == 30.0
+        assert activity.duration_minutes == pytest.approx(30.0)
 
     def test_repr(self, seeded_session):
         p = seeded_session.query(Participant).first()

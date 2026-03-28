@@ -120,7 +120,7 @@ class TestDaysExercised:
     )
     def test_days_exercised_count(self, days_kwargs, expected_count):
         sub = FakeSubmission(**days_kwargs)
-        assert days_exercised(sub) == expected_count
+        assert days_exercised(sub) == expected_count  # NOSONAR(S5655) FakeSubmission is a structural subtype
 
 
 class TestIsCompliant:
@@ -143,7 +143,7 @@ class TestIsCompliant:
     )
     def test_is_compliant(self, days_kwargs, expected_compliant):
         sub = FakeSubmission(**days_kwargs)
-        assert is_compliant(sub) is expected_compliant
+        assert is_compliant(sub) is expected_compliant  # NOSONAR(S5655) FakeSubmission is a structural subtype
 
 
 class TestCalculateStreak:
@@ -193,7 +193,7 @@ class TestCalculateStandings:
         standings = calculate_standings([], participants)
         assert len(standings) == 2
         assert all(s.points == 0 for s in standings)
-        assert all(s.avg_days == 0.0 for s in standings)
+        assert all(s.avg_days == pytest.approx(0.0) for s in standings)
 
     def test_sort_by_points(self):
         participants = [(1, "Alice"), (2, "Bob")]
@@ -230,9 +230,9 @@ class TestCalculateStandings:
         ]
         standings = calculate_standings(subs, participants)
         assert standings[0].name == "Alice"
-        assert standings[0].avg_days == 3.0
+        assert standings[0].avg_days == pytest.approx(3.0)
         assert standings[1].name == "Bob"
-        assert standings[1].avg_days == 2.0
+        assert standings[1].avg_days == pytest.approx(2.0)
 
     def test_avg_days_only_submitted_weeks(self):
         participants = [(1, "Alice")]
@@ -256,7 +256,7 @@ class TestCalculateStandings:
         ]
         standings = calculate_standings(subs, participants)
         # (3 + 5) / 2 = 4.0 (only 2 submitted weeks, not 3)
-        assert standings[0].avg_days == 4.0
+        assert standings[0].avg_days == pytest.approx(4.0)
         assert standings[0].weeks_submitted == 2
 
     def test_standing_dataclass(self):
@@ -271,6 +271,6 @@ class TestCalculateStandings:
         assert s.participant_id == 1
         assert s.name == "Test"
         assert s.points == 5
-        assert s.avg_days == 3.5
+        assert s.avg_days == pytest.approx(3.5)
         assert s.streak == 3
         assert s.weeks_submitted == 5
