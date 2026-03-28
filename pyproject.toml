@@ -247,6 +247,7 @@ known-first-party = ["exercise_competition"]
     "S108",   # hardcoded_tmp_directory - test temp paths are intentional
     "S311",   # random - non-crypto random in tests is fine
     "S113",   # request_without_timeout - test HTTP calls may be mocked
+    "UP017",  # Use datetime.timezone.utc for Python 3.10 compatibility
 ]
 
 # Scripts (utility code - not packages)
@@ -311,6 +312,7 @@ known-first-party = ["exercise_competition"]
 # Strava service - HTTP client and external API interactions
 "src/*/services/strava.py" = [
     "PLC0415", # Local imports within functions
+    "UP017",   # Use datetime.timezone.utc for Python 3.10 compatibility
 ]
 
 # API health checks - Example code with template patterns

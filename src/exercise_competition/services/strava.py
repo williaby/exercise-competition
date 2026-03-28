@@ -124,7 +124,7 @@ def refresh_strava_token(strava_token: StravaToken) -> StravaToken:
             token.access_token = data["access_token"]
             token.refresh_token = data["refresh_token"]
             token.expires_at = data["expires_at"]
-            token.updated_at = datetime.datetime.now(tz=datetime.UTC)
+            token.updated_at = datetime.datetime.now(tz=datetime.timezone.utc)
             logger.info(
                 "strava_token_refreshed",
                 participant_id=token.participant_id,
@@ -158,7 +158,7 @@ def refresh_strava_token(strava_token: StravaToken) -> StravaToken:
         expires_at=data["expires_at"],
         scope=strava_token.scope,
         created_at=strava_token.created_at,
-        updated_at=datetime.datetime.now(tz=datetime.UTC),
+        updated_at=datetime.datetime.now(tz=datetime.timezone.utc),
     )
 
 
@@ -202,7 +202,7 @@ def save_strava_token(
             existing.access_token = token_data["access_token"]
             existing.refresh_token = token_data["refresh_token"]
             existing.expires_at = token_data["expires_at"]
-            existing.updated_at = datetime.datetime.now(tz=datetime.UTC)
+            existing.updated_at = datetime.datetime.now(tz=datetime.timezone.utc)
             session.flush()
             logger.info(
                 "strava_token_updated",

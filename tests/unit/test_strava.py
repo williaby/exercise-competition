@@ -171,7 +171,7 @@ class TestStravaActivityModel:
             activity_type="Run",
             name="Morning Run",
             start_date_local=datetime.datetime(
-                2026, 4, 1, 8, 0, 0, tzinfo=datetime.UTC
+                2026, 4, 1, 8, 0, 0, tzinfo=datetime.timezone.utc
             ),
             elapsed_time_seconds=2400,
             moving_time_seconds=2100,
@@ -193,7 +193,7 @@ class TestStravaActivityModel:
             activity_type="Ride",
             name="Ride",
             start_date_local=datetime.datetime(
-                2026, 4, 1, 8, 0, 0, tzinfo=datetime.UTC
+                2026, 4, 1, 8, 0, 0, tzinfo=datetime.timezone.utc
             ),
             elapsed_time_seconds=3600,
             moving_time_seconds=1800,
@@ -210,7 +210,7 @@ class TestStravaActivityModel:
             activity_type="Swim",
             name="Pool",
             start_date_local=datetime.datetime(
-                2026, 4, 1, 8, 0, 0, tzinfo=datetime.UTC
+                2026, 4, 1, 8, 0, 0, tzinfo=datetime.timezone.utc
             ),
             elapsed_time_seconds=1800,
             moving_time_seconds=1500,
@@ -552,14 +552,14 @@ class TestDateHelpers:
         from exercise_competition.services.strava import _date_to_weekday_field
 
         # 2026-03-30 is a Monday
-        dt = datetime.datetime(2026, 3, 30, 10, 0, 0, tzinfo=datetime.UTC)
+        dt = datetime.datetime(2026, 3, 30, 10, 0, 0, tzinfo=datetime.timezone.utc)
         assert _date_to_weekday_field(dt) == "monday"
 
     def test_weekday_field_sunday(self):
         from exercise_competition.services.strava import _date_to_weekday_field
 
         # 2026-04-05 is a Sunday
-        dt = datetime.datetime(2026, 4, 5, 10, 0, 0, tzinfo=datetime.UTC)
+        dt = datetime.datetime(2026, 4, 5, 10, 0, 0, tzinfo=datetime.timezone.utc)
         assert _date_to_weekday_field(dt) == "sunday"
 
     def test_competition_week_first_day(self):
@@ -851,7 +851,7 @@ class TestSyncParticipantActivities:
             activity_type="Run",
             name="Existing",
             start_date_local=datetime.datetime(
-                2026, 4, 1, 8, 0, 0, tzinfo=datetime.UTC
+                2026, 4, 1, 8, 0, 0, tzinfo=datetime.timezone.utc
             ),
             elapsed_time_seconds=2400,
             moving_time_seconds=2100,
