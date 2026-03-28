@@ -86,7 +86,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             "style-src 'self' https://fonts.googleapis.com; "
             "img-src 'self' data: https:; "
             "font-src 'self' https://fonts.gstatic.com; "
-            "connect-src 'self'; "
+            "connect-src 'self' https://www.strava.com; "
             "frame-ancestors 'none'"
         )
 

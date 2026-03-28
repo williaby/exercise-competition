@@ -5,9 +5,11 @@ from __future__ import annotations
 import datetime
 
 from sqlalchemy import (
+    BigInteger,
     Boolean,
     CheckConstraint,
     DateTime,
+    Float,
     ForeignKey,
     Integer,
     String,
@@ -121,4 +123,118 @@ class WeeklySubmission(Base):
             f"participant_id={self.participant_id}, "
             f"week={self.week_number}, "
             f"days={self.days_exercised})"
+        )
+
+
+class StravaToken(Base):
+    """OAuth tokens for a participant's Strava connection.
+
+    Stores the access/refresh tokens needed to fetch activities from Strava
+    on behalf of a participant.
+
+    Attributes:
+        id: Auto-increment primary key.
+        participant_id: Foreign key to Participant (unique — one Strava account per person).
+        strava_athlete_id: Strava's unique athlete identifier.
+        access_token: Current OAuth access token.
+        refresh_token: OAuth refresh token (used to get new access tokens).
+        expires_at: Unix timestamp when the access token expires.
+        scope: OAuth scope granted (e.g. "activity:read").
+        created_at: When the connection was first established.
+        updated_at: When tokens were last refreshed.
+    """
+
+    __tablename__ = "strava_tokens"
+    __table_args__ = (
+        UniqueConstraint("participant_id", name="uq_strava_participant"),
+        UniqueConstraint("strava_athlete_id", name="uq_strava_athlete"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    participant_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("participants.id"), nullable=False
+    )
+    strava_athlete_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    access_token: Mapped[str] = mapped_column(String(255), nullable=False)
+    refresh_token: Mapped[str] = mapped_column(String(255), nullable=False)
+    expires_at: Mapped[int] = mapped_column(Integer, nullable=False)
+    scope: Mapped[str] = mapped_column(String(100), default="activity:read")
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime, default=datetime.datetime.now
+    )
+    updated_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime, default=datetime.datetime.now, onupdate=datetime.datetime.now
+    )
+
+    participant: Mapped[Participant] = relationship()
+
+    @property
+    def is_expired(self) -> bool:
+        """Whether the access token has expired."""
+        import time  # noqa: PLC0415
+
+        return int(time.time()) >= self.expires_at
+
+    def __repr__(self) -> str:
+        return (
+            f"StravaToken(id={self.id}, "
+            f"participant_id={self.participant_id}, "
+            f"athlete={self.strava_athlete_id})"
+        )
+
+
+class StravaActivity(Base):
+    """A Strava activity synced for a participant.
+
+    Stores individual activities fetched from Strava, used to auto-fill
+    weekly submission day checkboxes.
+
+    Attributes:
+        id: Auto-increment primary key.
+        participant_id: Foreign key to Participant.
+        strava_activity_id: Strava's unique activity identifier.
+        activity_type: Strava activity type (Run, Ride, Swim, etc.).
+        name: Activity name from Strava.
+        start_date_local: Local start time of the activity.
+        elapsed_time_seconds: Total elapsed time in seconds.
+        moving_time_seconds: Moving time in seconds.
+        distance_meters: Distance in meters (nullable for gym activities).
+        created_at: When this record was synced.
+    """
+
+    __tablename__ = "strava_activities"
+    __table_args__ = (
+        UniqueConstraint("strava_activity_id", name="uq_strava_activity_id"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    participant_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("participants.id"), nullable=False
+    )
+    strava_activity_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    activity_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    start_date_local: Mapped[datetime.datetime] = mapped_column(
+        DateTime, nullable=False
+    )
+    elapsed_time_seconds: Mapped[int] = mapped_column(Integer, nullable=False)
+    moving_time_seconds: Mapped[int] = mapped_column(Integer, nullable=False)
+    distance_meters: Mapped[float | None] = mapped_column(Float, nullable=True)
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime, default=datetime.datetime.now
+    )
+
+    participant: Mapped[Participant] = relationship()
+
+    @property
+    def duration_minutes(self) -> float:
+        """Activity duration in minutes (using moving time)."""
+        return self.moving_time_seconds / 60.0
+
+    def __repr__(self) -> str:
+        return (
+            f"StravaActivity(id={self.id}, "
+            f"participant_id={self.participant_id}, "
+            f"type={self.activity_type!r}, "
+            f"mins={self.duration_minutes:.0f})"
         )

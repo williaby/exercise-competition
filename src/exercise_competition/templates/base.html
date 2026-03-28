@@ -22,6 +22,7 @@
             <nav>
                 <a href="/leaderboard" {% if request.url.path == '/leaderboard' %}class="active"{% endif %}>Leaderboard</a>
                 <a href="/submit" {% if request.url.path == '/submit' %}class="active"{% endif %}>Log Exercise</a>
+                <a href="/strava" {% if request.url.path.startswith('/strava') %}class="active"{% endif %}>Strava</a>
             </nav>
         </div>
     </header>

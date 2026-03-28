@@ -60,6 +60,13 @@ class Settings(BaseSettings):
             raise ValueError(msg)
         return self
 
+    # Strava integration
+    strava_client_id: str = ""
+    strava_client_secret: str = ""
+    strava_redirect_uri: str = "https://nick-loses.williamshome.family/strava/callback"
+    strava_webhook_verify_token: str = ""  # Set to a random string for webhook validation
+    strava_min_activity_minutes: int = 30  # Minimum activity duration to count
+
 
 # A single, global instance of the settings
 settings = Settings()

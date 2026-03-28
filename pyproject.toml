@@ -32,6 +32,8 @@ dependencies = [
     "python-multipart>=0.0.18",
     "sqlalchemy>=2.0.0",
     "jinja2>=3.1.0",
+    # Strava API integration
+    "httpx>=0.27.0",
 ]
 
 # Optional dependency groups
@@ -299,6 +301,17 @@ known-first-party = ["exercise_competition"]
     "C901",   # Complexity allowed in utility scripts
     "ANN", "D", "TRY", "PLR",
     "INP",    # Not packages
+]
+
+# Strava integration routes
+"src/*/api/strava.py" = [
+    "PLC0415", # Local imports to avoid circular dependencies
+]
+
+# Strava service - HTTP client and external API interactions
+"src/*/services/strava.py" = [
+    "PLC0415", # Local imports within functions
+    "S105",    # STRAVA_TOKEN_URL is a URL, not a password
 ]
 
 # API health checks - Example code with template patterns
