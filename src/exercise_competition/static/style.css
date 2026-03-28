@@ -271,9 +271,16 @@ tr.leader:hover {
     color: #fff;
 }
 
+/* Section divider */
+.section-divider {
+    margin: 2.5rem 0 1.5rem;
+    border: none;
+    border-top: 2px solid #e0e0e0;
+}
+
 /* Joke banner */
 .joke-banner {
-    margin-top: 2rem;
+    margin-top: 1rem;
     padding: 1rem 1.25rem;
     background: #fff;
     border-left: 4px solid #16213e;
