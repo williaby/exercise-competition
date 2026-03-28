@@ -137,7 +137,7 @@ jobs:
       # §16.4 — Test Analytics: upload JUnit XML for flaky test detection
       - name: Upload unit test results to Codecov
         if: ${{ !cancelled() }}
-        uses: codecov/test-results-action@v5
+        uses: codecov/test-results-action@6ba3fdeec616fb91fd6a389b788a2366835a0fa2 # v1.2.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           file: reports/junit-unit.xml
@@ -145,7 +145,7 @@ jobs:
 
       - name: Upload integration test results to Codecov
         if: ${{ !cancelled() }}
-        uses: codecov/test-results-action@v5
+        uses: codecov/test-results-action@6ba3fdeec616fb91fd6a389b788a2366835a0fa2 # v1.2.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           file: reports/junit-integration.xml
