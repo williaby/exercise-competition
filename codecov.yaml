@@ -1,0 +1,97 @@
+# Codecov Configuration
+# Aligned with organizational testing standards (standards/testing.md §16)
+# Validate: curl --data-binary @codecov.yaml https://codecov.io/validate
+
+codecov:
+  require_ci_to_pass: true
+
+# §16.2 — Test-type flags (one flag per CI upload)
+flags:
+  unit:
+    paths: [src/]
+    carryforward: true
+  integration:
+    paths: [src/]
+    carryforward: true
+  frontend:
+    paths: [frontend/src/]
+    carryforward: true
+
+# §16.2–§16.5 — Coverage status checks
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 1%
+      unit:
+        target: 85%
+        flags: [unit]
+      integration:
+        target: 75%
+        flags: [integration]
+      frontend:
+        target: auto
+        flags: [frontend]
+    patch:
+      default:
+        target: 90%
+        threshold: 2%
+    # §16.6 — Informational changes check
+    changes:
+      default:
+        informational: true
+
+# §16.3 — Component-level coverage targets
+component_management:
+  default_rules:
+    statuses:
+      - type: project
+        target: 80%
+      - type: patch
+        target: 90%
+  individual_components:
+    - component_id: core
+      name: "Core (Config & Exceptions)"
+      paths: [src/exercise_competition/core/]
+    - component_id: api
+      name: "API Endpoints"
+      paths: [src/exercise_competition/api/]
+    - component_id: middleware
+      name: "Security Middleware"
+      paths: [src/exercise_competition/middleware/]
+      # Critical module — handles security headers, rate limiting, SSRF prevention
+      statuses:
+        - type: project
+          target: 90%
+        - type: patch
+          target: 95%
+    - component_id: services
+      name: "Business Logic Services"
+      paths: [src/exercise_competition/services/]
+    - component_id: utils
+      name: "Utilities"
+      paths: [src/exercise_competition/utils/]
+
+# §16.6 — PR comment layout
+comment:
+  layout: "condensed_header, diff, flags, components, condensed_files, condensed_footer"
+  require_changes: false
+  show_carryforward_flags: true
+
+# §16.6 — GitHub check annotations
+github_checks:
+  annotations: true
+
+# §16.7 — Exclude non-production code from coverage reporting
+ignore:
+  - "tests/"
+  - "docs/"
+  - "scripts/"
+  - "*/__pycache__/"
+  - "*.yaml"
+  - "*.toml"
+  - "*.cfg"
+  - "noxfile.py"
+  - "frontend/vite.config.ts"
+  - "frontend/*.config.*"

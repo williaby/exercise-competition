@@ -69,7 +69,7 @@
       "_comment_org_workflows": "Use org-level reusable workflows (requires .github repo with shared workflows)",
       "include_semantic_release": "no",
       "include_fuzzing": "no",
-      "include_codecov": "no",
+      "include_codecov": "yes",
       "include_sonarcloud": "no",
       "sonarcloud_organization": "your-org",
       "include_renovate": "no",

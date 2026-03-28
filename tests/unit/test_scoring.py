@@ -5,6 +5,8 @@ from __future__ import annotations
 import datetime
 from unittest.mock import patch
 
+import pytest
+
 from exercise_competition.services.scoring import (
     COMPETITION_TZ,
     Standing,
@@ -45,101 +47,103 @@ class FakeSubmission:
 class TestGetCurrentWeek:
     """Tests for get_current_week()."""
 
-    def test_before_competition(self):
-        fake_now = datetime.datetime(2026, 3, 29, 12, 0, tzinfo=COMPETITION_TZ)
+    @pytest.mark.parametrize(
+        "fake_now, expected_week",
+        [
+            pytest.param(
+                datetime.datetime(2026, 3, 29, 12, 0, tzinfo=COMPETITION_TZ),
+                None,
+                id="before-competition",
+            ),
+            pytest.param(
+                datetime.datetime(2026, 3, 30, 8, 0, tzinfo=COMPETITION_TZ),
+                1,
+                id="week-1-first-day",
+            ),
+            pytest.param(
+                datetime.datetime(2026, 4, 5, 23, 59, tzinfo=COMPETITION_TZ),
+                1,
+                id="week-1-last-day",
+            ),
+            pytest.param(
+                datetime.datetime(2026, 4, 6, 0, 0, tzinfo=COMPETITION_TZ),
+                2,
+                id="week-2-first-day",
+            ),
+            pytest.param(
+                datetime.datetime(2026, 8, 10, 12, 0, tzinfo=COMPETITION_TZ),
+                20,
+                id="week-20",
+            ),
+            pytest.param(
+                datetime.datetime(2026, 8, 17, 0, 0, tzinfo=COMPETITION_TZ),
+                None,
+                id="after-competition",
+            ),
+        ],
+    )
+    def test_get_current_week_returns_expected(self, fake_now, expected_week):
         with patch("exercise_competition.services.scoring.datetime") as mock_dt:
             mock_dt.datetime.now.return_value = fake_now
             mock_dt.date = datetime.date
             result = get_current_week()
-        assert result is None
-
-    def test_week_1_first_day(self):
-        fake_now = datetime.datetime(2026, 3, 30, 8, 0, tzinfo=COMPETITION_TZ)
-        with patch("exercise_competition.services.scoring.datetime") as mock_dt:
-            mock_dt.datetime.now.return_value = fake_now
-            mock_dt.date = datetime.date
-            result = get_current_week()
-        assert result == 1
-
-    def test_week_1_last_day(self):
-        fake_now = datetime.datetime(2026, 4, 5, 23, 59, tzinfo=COMPETITION_TZ)
-        with patch("exercise_competition.services.scoring.datetime") as mock_dt:
-            mock_dt.datetime.now.return_value = fake_now
-            mock_dt.date = datetime.date
-            result = get_current_week()
-        assert result == 1
-
-    def test_week_2_first_day(self):
-        fake_now = datetime.datetime(2026, 4, 6, 0, 0, tzinfo=COMPETITION_TZ)
-        with patch("exercise_competition.services.scoring.datetime") as mock_dt:
-            mock_dt.datetime.now.return_value = fake_now
-            mock_dt.date = datetime.date
-            result = get_current_week()
-        assert result == 2
-
-    def test_week_20(self):
-        fake_now = datetime.datetime(2026, 8, 10, 12, 0, tzinfo=COMPETITION_TZ)
-        with patch("exercise_competition.services.scoring.datetime") as mock_dt:
-            mock_dt.datetime.now.return_value = fake_now
-            mock_dt.date = datetime.date
-            result = get_current_week()
-        assert result == 20
-
-    def test_after_competition(self):
-        fake_now = datetime.datetime(2026, 8, 17, 0, 0, tzinfo=COMPETITION_TZ)
-        with patch("exercise_competition.services.scoring.datetime") as mock_dt:
-            mock_dt.datetime.now.return_value = fake_now
-            mock_dt.date = datetime.date
-            result = get_current_week()
-        assert result is None
+        assert result == expected_week
 
 
 class TestDaysExercised:
     """Tests for days_exercised()."""
 
-    def test_zero_days(self):
-        sub = FakeSubmission()
-        assert days_exercised(sub) == 0
-
-    def test_all_seven_days(self):
-        sub = FakeSubmission(
-            monday=True,
-            tuesday=True,
-            wednesday=True,
-            thursday=True,
-            friday=True,
-            saturday=True,
-            sunday=True,
-        )
-        assert days_exercised(sub) == 7
-
-    def test_three_days(self):
-        sub = FakeSubmission(monday=True, wednesday=True, friday=True)
-        assert days_exercised(sub) == 3
-
-    def test_one_day(self):
-        sub = FakeSubmission(saturday=True)
-        assert days_exercised(sub) == 1
+    @pytest.mark.parametrize(
+        "days_kwargs, expected_count",
+        [
+            pytest.param({}, 0, id="zero-days"),
+            pytest.param(
+                {
+                    "monday": True,
+                    "tuesday": True,
+                    "wednesday": True,
+                    "thursday": True,
+                    "friday": True,
+                    "saturday": True,
+                    "sunday": True,
+                },
+                7,
+                id="all-seven-days",
+            ),
+            pytest.param(
+                {"monday": True, "wednesday": True, "friday": True},
+                3,
+                id="three-days",
+            ),
+            pytest.param({"saturday": True}, 1, id="one-day"),
+        ],
+    )
+    def test_days_exercised_count(self, days_kwargs, expected_count):
+        sub = FakeSubmission(**days_kwargs)
+        assert days_exercised(sub) == expected_count
 
 
 class TestIsCompliant:
     """Tests for is_compliant()."""
 
-    def test_zero_days_not_compliant(self):
-        sub = FakeSubmission()
-        assert is_compliant(sub) is False
-
-    def test_one_day_not_compliant(self):
-        sub = FakeSubmission(monday=True)
-        assert is_compliant(sub) is False
-
-    def test_two_days_compliant(self):
-        sub = FakeSubmission(monday=True, tuesday=True)
-        assert is_compliant(sub) is True
-
-    def test_three_days_compliant(self):
-        sub = FakeSubmission(monday=True, tuesday=True, wednesday=True)
-        assert is_compliant(sub) is True
+    @pytest.mark.parametrize(
+        "days_kwargs, expected_compliant",
+        [
+            pytest.param({}, False, id="zero-days-not-compliant"),
+            pytest.param({"monday": True}, False, id="one-day-not-compliant"),
+            pytest.param(
+                {"monday": True, "tuesday": True}, True, id="two-days-compliant"
+            ),
+            pytest.param(
+                {"monday": True, "tuesday": True, "wednesday": True},
+                True,
+                id="three-days-compliant",
+            ),
+        ],
+    )
+    def test_is_compliant(self, days_kwargs, expected_compliant):
+        sub = FakeSubmission(**days_kwargs)
+        assert is_compliant(sub) is expected_compliant
 
 
 class TestCalculateStreak:

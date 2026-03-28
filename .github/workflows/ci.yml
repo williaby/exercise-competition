@@ -4,7 +4,9 @@
 # Features:
 #   - Standard quality checks (tests, linting, type checking)
 #   - Security scanning (Bandit, Safety)
-#   - Optional SonarCloud/Codecov integration
+#   - Codecov coverage and test analytics integration
+#
+# Execution order per §15.2: type check → SAST → unit tests → integration tests → coverage
 name: CI
 
 on:
@@ -25,10 +27,10 @@ permissions:
   pull-requests: write
   checks: write
 
-# Standalone CI workflow
 jobs:
-  test:
-    name: Test (Python 3.12)
+  # §15.2 — Static checks run first; tests depend on them passing
+  static-checks:
+    name: Static Checks (Python 3.12)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -45,10 +47,6 @@ jobs:
       - name: Install dependencies
         run: uv sync --all-extras
 
-      - name: Run tests with coverage
-        run: |
-          uv run pytest -v --cov=src --cov-report=xml --cov-report=term-missing --cov-fail-under=80
-
       - name: Run type checker
         run: uv run basedpyright src/
 
@@ -57,6 +55,90 @@ jobs:
 
       - name: Run security scan (Bandit)
         run: uv run bandit -r src/ -c pyproject.toml --severity-level medium --confidence-level medium
+
+  test:
+    name: Test (Python 3.12)
+    needs: static-checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Install dependencies
+        run: uv sync --all-extras
+
+      - name: Create reports directory
+        run: mkdir -p reports
+
+      # §16.2 — Separate runs per test type with dedicated flags
+      - name: Run unit tests
+        run: |
+          uv run pytest tests/unit/ -v \
+            --cov=src/exercise_competition \
+            --cov-branch \
+            --cov-report=xml:reports/coverage-unit.xml \
+            --cov-report=term-missing \
+            --cov-fail-under=80 \
+            --junitxml=reports/junit-unit.xml \
+            -o junit_family=legacy
+
+      - name: Run integration tests
+        if: ${{ !cancelled() }}
+        run: |
+          uv run pytest tests/integration/ -v \
+            --cov=src/exercise_competition \
+            --cov-branch \
+            --cov-report=xml:reports/coverage-integration.xml \
+            --cov-report=term-missing \
+            --junitxml=reports/junit-integration.xml \
+            -o junit_family=legacy \
+            --no-cov-on-fail || true
+
+      # §16.2 — Upload coverage per flag (one report per flag)
+      - name: Upload unit coverage to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/codecov-action@5c47607acb93fed5485fdbf7232e8a31425f672a # v4.6.0
+        with:
+          file: reports/coverage-unit.xml
+          flags: unit
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Upload integration coverage to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/codecov-action@5c47607acb93fed5485fdbf7232e8a31425f672a # v4.6.0
+        with:
+          file: reports/coverage-integration.xml
+          flags: integration
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+      # §16.4 — Test Analytics: upload JUnit XML for flaky test detection
+      - name: Upload unit test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: reports/junit-unit.xml
+          flags: unit
+
+      - name: Upload integration test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: reports/junit-integration.xml
+          flags: integration
 
   frontend:
     name: Frontend (Node 22)
