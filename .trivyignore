@@ -1,0 +1,17 @@
+# Trivy Ignore File
+# Each entry MUST include: CVE ID, affected package, justification, and review date.
+# Per testing standards §14.4: vulnerabilities without patches must be documented
+# in a risk register with mitigation plan and review date.
+
+# --------------------------------------------------------------------------
+# CVE-2026-4539 — Pygments <= 2.19.2
+# Severity: MEDIUM (ReDoS in AdlLexer — archetype definition language)
+# Affected: pygments/lexers/archetype.py
+# Risk: LOCAL access only. Attacker must supply crafted .adl input to the
+#        AdlLexer. This project does not process user-supplied Pygments input;
+#        pygments is a transitive dev dependency of pytest, rich, and ipython.
+# Mitigation: Not exposed in production (dev-only dependency). No fix version
+#             available — upstream has not responded to the disclosure.
+# Review date: 2026-04-28 (re-evaluate monthly for upstream fix)
+# --------------------------------------------------------------------------
+CVE-2026-4539

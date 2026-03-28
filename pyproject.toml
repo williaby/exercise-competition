@@ -63,7 +63,9 @@ dev = [
     "pre-commit>=3.3.0",
     # Documentation
     # Development Tools
-    "interrogate>=1.7.0",
+    # interrogate removed from venv deps — its hard dependency on the deprecated
+    # and vulnerable `py` package (PYSEC-2022-42969, no fix) makes it a security
+    # risk. The pre-commit hook still runs interrogate in its own isolated env.
     "jupyter>=1.0.0",
     "ipykernel>=6.25.0",
     "safety>=3.7.0",
