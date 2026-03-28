@@ -9,9 +9,9 @@ FROM python:3.12.8-slim AS builder
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    curl \
-    git \
+    build-essential=12.9 \
+    curl=7.88.1-10+deb12u14 \
+    git=1:2.39.5-0+deb12u3 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
@@ -39,8 +39,8 @@ LABEL org.opencontainers.image.licenses="MIT"
 
 # Install curl for healthcheck, then clean up
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates \
-    curl \
+    ca-certificates=20230311+deb12u1 \
+    curl=7.88.1-10+deb12u14 \
     && rm -rf /var/lib/apt/lists/*
 
 # Security: Create non-root user

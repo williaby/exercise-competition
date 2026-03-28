@@ -52,4 +52,5 @@ jobs:
       generate-sbom: true
       upload-sarif: true
       artifact-retention-days: 90
+      enable-dhi-login: false
     secrets: inherit
