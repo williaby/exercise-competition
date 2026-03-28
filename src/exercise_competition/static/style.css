@@ -942,6 +942,17 @@ tbody tr:hover {
     .brand-text { font-size: 0.95rem; }
     .brand-sub { display: none; }
 
+    .strava-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    .strava-card-actions {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+
     main {
         padding: 1rem 0.75rem 2rem;
     }

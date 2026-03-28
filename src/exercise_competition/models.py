@@ -215,7 +215,7 @@ class StravaActivity(Base):
     activity_type: Mapped[str] = mapped_column(String(50), nullable=False)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     start_date_local: Mapped[datetime.datetime] = mapped_column(
-        DateTime, nullable=False
+        DateTime(timezone=True), nullable=False
     )
     elapsed_time_seconds: Mapped[int] = mapped_column(Integer, nullable=False)
     moving_time_seconds: Mapped[int] = mapped_column(Integer, nullable=False)

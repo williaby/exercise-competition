@@ -311,7 +311,6 @@ known-first-party = ["exercise_competition"]
 # Strava service - HTTP client and external API interactions
 "src/*/services/strava.py" = [
     "PLC0415", # Local imports within functions
-    "S105",    # STRAVA_TOKEN_URL is a URL, not a password
 ]
 
 # API health checks - Example code with template patterns

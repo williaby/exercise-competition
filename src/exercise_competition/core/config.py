@@ -63,9 +63,9 @@ class Settings(BaseSettings):
     # Strava integration
     strava_client_id: str = ""
     strava_client_secret: str = ""
-    strava_redirect_uri: str = "https://nick-loses.williamshome.family/strava/callback"
+    strava_redirect_uri: str = ""
     strava_webhook_verify_token: str = ""  # Set to a random string for webhook validation
-    strava_min_activity_minutes: int = 30  # Minimum activity duration to count
+    strava_min_activity_minutes: Annotated[int, Field(ge=1, le=1440)] = 30
 
 
 # A single, global instance of the settings

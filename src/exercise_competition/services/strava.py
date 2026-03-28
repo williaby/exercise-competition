@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import datetime
 from typing import Any
+from urllib.parse import urlencode
 
 import httpx
 
@@ -29,7 +30,7 @@ from exercise_competition.utils.logging import get_logger
 logger = get_logger(__name__)
 
 STRAVA_AUTH_URL = "https://www.strava.com/oauth/authorize"
-STRAVA_TOKEN_URL = "https://www.strava.com/oauth/token"
+STRAVA_TOKEN_URL = "https://www.strava.com/oauth/token"  # noqa: S105
 STRAVA_API_BASE = "https://www.strava.com/api/v3"
 STRAVA_DEAUTH_URL = "https://www.strava.com/oauth/deauthorize"
 
@@ -65,7 +66,7 @@ def get_strava_auth_url(participant_id: int) -> str:
         "scope": "activity:read",
         "state": str(participant_id),
     }
-    query = "&".join(f"{k}={v}" for k, v in params.items())
+    query = urlencode(params)
     return f"{STRAVA_AUTH_URL}?{query}"
 
 
@@ -78,9 +79,6 @@ def exchange_strava_code(code: str) -> dict[str, Any]:
     Returns:
         Strava token response containing access_token, refresh_token,
         expires_at, and athlete info.
-
-    Raises:
-        httpx.HTTPStatusError: If the token exchange fails.
     """
     with httpx.Client(timeout=15.0) as client:
         resp = client.post(
@@ -106,9 +104,6 @@ def refresh_strava_token(strava_token: StravaToken) -> StravaToken:
 
     Returns:
         The updated StravaToken with fresh credentials.
-
-    Raises:
-        httpx.HTTPStatusError: If the refresh request fails.
     """
     with httpx.Client(timeout=15.0) as client:
         resp = client.post(
@@ -147,7 +142,24 @@ def refresh_strava_token(strava_token: StravaToken) -> StravaToken:
                 created_at=token.created_at,
                 updated_at=token.updated_at,
             )
-    return strava_token
+
+    # DB record was deleted between refresh and lookup — return fresh data
+    logger.info(
+        "strava_token_refreshed",
+        participant_id=strava_token.participant_id,
+        expires_at=data["expires_at"],
+    )
+    return StravaToken(
+        id=strava_token.id,
+        participant_id=strava_token.participant_id,
+        strava_athlete_id=strava_token.strava_athlete_id,
+        access_token=data["access_token"],
+        refresh_token=data["refresh_token"],
+        expires_at=data["expires_at"],
+        scope=strava_token.scope,
+        created_at=strava_token.created_at,
+        updated_at=datetime.datetime.now(tz=datetime.UTC),
+    )
 
 
 def _get_valid_token(strava_token: StravaToken) -> StravaToken:
@@ -191,12 +203,23 @@ def save_strava_token(
             existing.refresh_token = token_data["refresh_token"]
             existing.expires_at = token_data["expires_at"]
             existing.updated_at = datetime.datetime.now(tz=datetime.UTC)
+            session.flush()
             logger.info(
                 "strava_token_updated",
                 participant_id=participant_id,
                 athlete_id=athlete_id,
             )
-            return existing
+            return StravaToken(
+                id=existing.id,
+                participant_id=existing.participant_id,
+                strava_athlete_id=existing.strava_athlete_id,
+                access_token=existing.access_token,
+                refresh_token=existing.refresh_token,
+                expires_at=existing.expires_at,
+                scope=existing.scope,
+                created_at=existing.created_at,
+                updated_at=existing.updated_at,
+            )
 
         token = StravaToken(
             participant_id=participant_id,
@@ -207,12 +230,23 @@ def save_strava_token(
             scope=token_data.get("scope", "activity:read"),
         )
         session.add(token)
+        session.flush()
         logger.info(
             "strava_token_created",
             participant_id=participant_id,
             athlete_id=athlete_id,
         )
-        return token
+        return StravaToken(
+            id=token.id,
+            participant_id=token.participant_id,
+            strava_athlete_id=token.strava_athlete_id,
+            access_token=token.access_token,
+            refresh_token=token.refresh_token,
+            expires_at=token.expires_at,
+            scope=token.scope,
+            created_at=token.created_at,
+            updated_at=token.updated_at,
+        )
 
 
 def fetch_strava_activities(
@@ -238,14 +272,27 @@ def fetch_strava_activities(
     if before is not None:
         params["before"] = before
 
+    all_activities: list[dict[str, Any]] = []
+    page = 1
+
     with httpx.Client(timeout=15.0) as client:
-        resp = client.get(
-            f"{STRAVA_API_BASE}/athlete/activities",
-            headers={"Authorization": f"Bearer {token.access_token}"},
-            params=params,
-        )
-        resp.raise_for_status()
-        return resp.json()
+        while True:
+            params["page"] = page
+            resp = client.get(
+                f"{STRAVA_API_BASE}/athlete/activities",
+                headers={"Authorization": f"Bearer {token.access_token}"},
+                params=params,
+            )
+            resp.raise_for_status()
+            batch: list[dict[str, Any]] = resp.json()
+            if not batch:
+                break
+            all_activities.extend(batch)
+            if len(batch) < 100:
+                break
+            page += 1
+
+    return all_activities
 
 
 def _date_to_weekday_field(dt: datetime.datetime) -> str:
@@ -334,29 +381,29 @@ def sync_participant_activities(participant_id: int) -> int:
     synced_count = 0
     weeks_modified: set[int] = set()
 
-    for activity in activities:
-        strava_id = activity["id"]
-        moving_time = activity.get("moving_time", 0)
-        duration_minutes = moving_time / _SECONDS_PER_MINUTE
+    with get_session() as session:
+        for activity in activities:
+            strava_id = activity["id"]
+            moving_time = activity.get("moving_time", 0)
+            duration_minutes = moving_time / _SECONDS_PER_MINUTE
 
-        # Parse the local start time
-        start_local_str = activity.get("start_date_local", "")
-        try:
-            start_local = datetime.datetime.fromisoformat(start_local_str)
-        except (ValueError, AttributeError):
-            logger.warning(
-                "strava_activity_bad_date",
-                strava_id=strava_id,
-                start_date=start_local_str,
-            )
-            continue
+            # Parse the local start time
+            start_local_str = activity.get("start_date_local", "")
+            try:
+                start_local = datetime.datetime.fromisoformat(start_local_str)
+            except (ValueError, AttributeError):
+                logger.warning(
+                    "strava_activity_bad_date",
+                    strava_id=strava_id,
+                    start_date=start_local_str,
+                )
+                continue
 
-        activity_date = start_local.date()
-        week_num = _date_to_competition_week(activity_date)
-        if week_num is None:
-            continue
+            activity_date = start_local.date()
+            week_num = _date_to_competition_week(activity_date)
+            if week_num is None:
+                continue
 
-        with get_session() as session:
             # Check if activity already exists
             existing_activity = (
                 session.query(StravaActivity)
@@ -383,9 +430,7 @@ def sync_participant_activities(participant_id: int) -> int:
             # Only auto-fill if activity meets minimum duration
             if duration_minutes >= settings.strava_min_activity_minutes:
                 day_field = _date_to_weekday_field(start_local)
-                _update_weekly_submission(
-                    session, participant_id, week_num, day_field
-                )
+                _update_weekly_submission(session, participant_id, week_num, day_field)
                 weeks_modified.add(week_num)
 
     if weeks_modified:
@@ -464,20 +509,19 @@ def get_connected_participants() -> list[dict[str, Any]]:
     """
     with get_session() as session:
         participants = session.query(Participant).order_by(Participant.name).all()
-        tokens = {
-            t.participant_id: t
-            for t in session.query(StravaToken).all()
-        }
+        tokens = {t.participant_id: t for t in session.query(StravaToken).all()}
 
         result = []
         for p in participants:
             token = tokens.get(p.id)
-            result.append({
-                "id": p.id,
-                "name": p.name,
-                "strava_connected": token is not None,
-                "strava_athlete_id": token.strava_athlete_id if token else None,
-            })
+            result.append(
+                {
+                    "id": p.id,
+                    "name": p.name,
+                    "strava_connected": token is not None,
+                    "strava_athlete_id": token.strava_athlete_id if token else None,
+                }
+            )
         return result
 
 

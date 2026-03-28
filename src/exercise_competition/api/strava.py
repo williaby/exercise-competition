@@ -7,6 +7,7 @@ manual sync triggers.
 
 from __future__ import annotations
 
+import secrets
 from typing import TYPE_CHECKING, Annotated
 
 from fastapi import APIRouter, Query, Request
@@ -83,13 +84,17 @@ def strava_connect(participant_id: int) -> RedirectResponse:
         Redirect to Strava's authorization page.
     """
     if not settings.strava_client_id:
-        return RedirectResponse(url="/strava?msg=strava_not_configured", status_code=302)
+        return RedirectResponse(
+            url="/strava?msg=strava_not_configured", status_code=302
+        )
 
     # Validate participant exists
     with get_session() as session:
         participant = session.get(Participant, participant_id)
         if participant is None:
-            return RedirectResponse(url="/strava?msg=invalid_participant", status_code=302)
+            return RedirectResponse(
+                url="/strava?msg=invalid_participant", status_code=302
+            )
 
     auth_url = get_strava_auth_url(participant_id)
     return RedirectResponse(url=auth_url, status_code=302)
@@ -116,7 +121,9 @@ def strava_callback(
         return RedirectResponse(url="/strava?msg=auth_denied", status_code=302)
 
     if not code or not state:
-        logger.warning("strava_callback_missing_params", code=bool(code), state=bool(state))
+        logger.warning(
+            "strava_callback_missing_params", code=bool(code), state=bool(state)
+        )
         return RedirectResponse(url="/strava?msg=auth_error", status_code=302)
 
     try:
@@ -129,7 +136,9 @@ def strava_callback(
     with get_session() as session:
         participant = session.get(Participant, participant_id)
         if participant is None:
-            return RedirectResponse(url="/strava?msg=invalid_participant", status_code=302)
+            return RedirectResponse(
+                url="/strava?msg=invalid_participant", status_code=302
+            )
 
     try:
         token_data = exchange_strava_code(code)
@@ -252,7 +261,8 @@ def strava_webhook_verify(
     if hub_mode != "subscribe":
         return JSONResponse({"error": "invalid mode"}, status_code=400)
 
-    if hub_verify_token != settings.strava_webhook_verify_token:
+    expected = settings.strava_webhook_verify_token or ""
+    if not secrets.compare_digest(hub_verify_token or "", expected):
         logger.warning("strava_webhook_invalid_verify_token")
         return JSONResponse({"error": "invalid verify token"}, status_code=403)
 

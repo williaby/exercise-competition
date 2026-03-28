@@ -13,7 +13,7 @@
 {% elif msg == 'auth_error' %}
 <div class="alert alert-error">&#9888; Error connecting to Strava. Please try again.</div>
 {% elif msg == 'strava_not_configured' %}
-<div class="alert alert-error">&#9888; Strava integration is not configured. Set STRAVA_CLIENT_ID and STRAVA_CLIENT_SECRET.</div>
+<div class="alert alert-error">&#9888; Strava integration is not configured. Set EXERCISE_COMPETITION_STRAVA_CLIENT_ID and EXERCISE_COMPETITION_STRAVA_CLIENT_SECRET.</div>
 {% elif msg == 'sync_error' %}
 <div class="alert alert-error">&#9888; Error syncing activities. Please try again.</div>
 {% elif msg and msg.startswith('synced_') %}
