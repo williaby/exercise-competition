@@ -28,7 +28,7 @@ import random
 
 NICK_JOKES: list[str] = [
     # =====================================================================
-    # PA vs MD — The Credential Gap (35%)
+    # PA vs MD — The Credential Gap
     # =====================================================================
     "Nick introduces himself as 'almost a doctor' and hopes nobody asks follow-up questions.",
     "Nick is a PA, which stands for 'Practically Actual... no wait, not quite.'",
@@ -52,7 +52,7 @@ NICK_JOKES: list[str] = [
     "Nick didn't fail medical school. He just took the scenic route to a lesser destination.",
     "When Nick says 'trust me, I'm a doctor,' his own family starts laughing.",
     "The Williams family has an MD-to-PA conversion rate of 66%. Nick is the 34%.",
-    "Nick went to the same school as his dad and brother. They got MDs. He got a consolidation prize.",
+    "Nick went to the same school as his dad and brother. They got MDs. He got a consolation prize.",
     "PA-C: the C stands for 'Close enough.'",
     "PA-C: Pretty Almost a Clinician.",
     "PA school is just medical school with a participation trophy at the end.",
@@ -64,7 +64,7 @@ NICK_JOKES: list[str] = [
     "Rachel went to vet school and became a doctor. Nick went to OHSU and became adjacent.",
     "At Thanksgiving, the MDs carve the turkey. Nick supervises.",
     # =====================================================================
-    # Endocrinology / Metabolism Irony (15%)
+    # Endocrinology / Metabolism Irony
     # =====================================================================
     "Nick chose endocrinology because he relates to hormones — always overreacting.",
     "Nick can regulate your thyroid but can't regulate his exercise schedule.",
@@ -85,7 +85,7 @@ NICK_JOKES: list[str] = [
     "Nick tells patients to exercise more and eat better for a living. This competition is his annual performance review.",
     "Nick's clinic bio says he makes 'an impact on patients' lives.' His impact on the leaderboard is less inspiring.",
     "Nick thoroughly enjoys being a collaborative part of his patients' health journey. His own health journey has detours.",
-    "Salem Endocrinology's finest, ladies and gentlemen. Check the leaderboard for his fitness credentials.",
+    "Nick's clinic's finest, ladies and gentlemen. Check the leaderboard for his fitness credentials.",
     "Nick can tell you exactly which hormones control weight gain. Still won't help him win.",
     "Somewhere in Salem, Nick is telling a patient to exercise more while actively losing this competition.",
     "Nick counsels patients on the dangers of a sedentary lifestyle, then sits down to check his leaderboard ranking.",
@@ -97,7 +97,7 @@ NICK_JOKES: list[str] = [
     "Nick optimizes cortisol, insulin, and testosterone levels for patients. His own levels are optimized for disappointment.",
     "Nick spent years studying the endocrine system — the body's engine. His engine is in park.",
     # =====================================================================
-    # Philosophy & History Degrees (15%)
+    # Philosophy & History Degrees
     # =====================================================================
     "Nick and Justin both studied Philosophy in Oregon. One became an MD. One became a cautionary tale.",
     "Nick minored in Philosophy so he could rationalize his losses more eloquently.",
@@ -125,7 +125,7 @@ NICK_JOKES: list[str] = [
     "Nick's Philosophy minor taught him to ask 'Why?' His career answers it: 'Because medical school was too hard.'",
     "Nick works in endocrinology, where he helps patients optimize their hormones. His own cortisol spikes every time someone calls Justin 'Doctor Williams.'",
     # =====================================================================
-    # Leaderboard / Competition Performance (15%)
+    # Leaderboard / Competition Performance
     # =====================================================================
     "Nick is the youngest competitor and has the fewest excuses. He's finding new ones anyway.",
     "If Nick can't beat a 70-year-old retired physician in a fitness competition, what was the point of Human Physiology?",
@@ -139,7 +139,7 @@ NICK_JOKES: list[str] = [
     "Two days a week, Nick. That's all we ask. Your patients would be disappointed.",
     "Nick snowshoes, backpacks, and hikes. But can he check a box on a website twice a week?",
     # =====================================================================
-    # Family Hierarchy & Dynamics (10%)
+    # Family Hierarchy & Dynamics
     # =====================================================================
     "At Williams family gatherings, Nick's professional title gets an asterisk.",
     "Holiday seating chart: Doctor, Doctor, Doctor (of veterinary medicine), Accountant, Nick.",
@@ -153,7 +153,7 @@ NICK_JOKES: list[str] = [
     "Byron, Justin, Nick, and Bruce: a CPA, an OB/GYN, a PA, and a retired family doc walk into a fitness competition. The PA loses.",
     "Nick is the only Williams brother whose credential needs a hyphen and a footnote.",
     # =====================================================================
-    # Bruce's Age vs Nick's Youth (5%)
+    # Bruce's Age vs Nick's Youth
     # =====================================================================
     "Bruce is in his 70s, retired, and still competing. Nick is 39 with a metabolism specialty. No pressure.",
     "If Bruce beats Nick in any given week, Nick should have to surrender his endocrinology certification.",
@@ -162,14 +162,14 @@ NICK_JOKES: list[str] = [
     "A man who retired from medicine is outworking the man who currently practices it. Classic Williams energy.",
     "Bruce doesn't need to check Nick's thyroid to know what's wrong. It's called not exercising.",
     # =====================================================================
-    # Kids Roasting Nick (3%)
+    # Kids Roasting Nick
     # =====================================================================
-    "Elanor is 8 and already knows a PA isn't a real doctor. Kids are perceptive.",
-    "Brysen is 6 and calls his mom 'the real doctor in the family.' Rachel didn't correct him.",
+    "One of Nick's kids already knows a PA isn't a real doctor. Kids are perceptive.",
+    "Another one of Nick's kids calls their mom 'the real doctor in the family.' Rachel didn't correct him.",
     "Nick's kids ask him medical questions and then say 'we'll ask Mom to be sure.'",
-    "Elanor told her class her mom is a doctor and her dad is 'like a helper doctor.'",
+    "One of Nick's kids told their class that mom is a doctor and dad is 'like a helper doctor.'",
     "Nick's kids asked if he's a real doctor. Rachel said 'Even the dog has a better provider.'",
-    "Nick's daughter Elanor will probably be a doctor someday. Then she can supervise him too.",
+    "Nick's daughter will probably be a doctor someday. Then she can supervise him too.",
     "Even Nick's golden retrievers have more letters after their name. AKC > PA-C.",
     # =====================================================================
     # Youngest Child Classics
@@ -214,12 +214,12 @@ NICK_JOKES: list[str] = [
     "As the baby, Nick's role at family gatherings hasn't changed in 39 years: show up, get roasted, say nothing.",
     "Nick's entire childhood was a beta test. His brothers were the finished product.",
     # =====================================================================
-    # Golden Retriever Dad Energy (1%)
+    # Golden Retriever Dad Energy
     # =====================================================================
     "Nick's hobbies include hiking with golden retrievers and losing fitness competitions. Peak retriever dad energy.",
     "Nick has big golden retriever energy: loyal, enthusiastic, and no idea he's losing.",
     # =====================================================================
-    # Boring, Oregon (1%)
+    # Boring, Oregon
     # =====================================================================
     "Nick got married in Boring, Oregon. The town named itself after his leaderboard performance.",
     "Nick and Rachel's wedding was in Boring, Oregon. The universe was trying to tell him something.",
@@ -248,7 +248,7 @@ NICK_JOKES: list[str] = [
     "Nick's wife fixes animals. Nick assists doctors. The family veterinarian outranks him.",
     "Rachel's patients can't talk and still respect her doctorate more than Nick's kids respect his PA.",
     "Rachel went to veterinary school — 4 years of doctorate-level education. Nick went to PA school — 2 years of 'close enough.'",
-    "Rachel Rich became Rachel Williams and a DVM. Nick Williams stayed Nick Williams and a PA. She upgraded. He lateral-moved.",
+    "Rachel became a veterinarian with a doctorate. Nick became a PA. She upgraded. He lateral-moved.",
     "PA school: 27 months. Medical school + residency: 7-8 years. The difference? People call you 'Doctor' at Thanksgiving.",
     "Nick's supervising physician has to co-sign his charts. Bruce and Justin just sign theirs.",
     "Nick's PA badge gets him into the hospital. Justin's MD badge gets him respect. There's a difference.",
@@ -298,7 +298,7 @@ NICK_JOKES: list[str] = [
     "Nick helps regulate other people's insulin sensitivity but can't regulate his own position on this leaderboard.",
     "Nick's bio mentions snowshoeing. Bold of a man losing a fitness competition to claim outdoor hobbies.",
     "Nick's clinic bio says he enjoys 'hiking, backpacking, and snowshoeing.' Strange that none of that cardio is showing up on this leaderboard.",
-    "Nick works at Salem Endocrinology on Skyline Road. The only skyline he'll see in this competition is everyone else's back.",
+    "The only skyline Nick will see in this competition is everyone else's back.",
     "Nick's supervising physician reviews his work. This leaderboard reviews his life choices.",
     "Nick's clinic says patients can 'Request an Appointment.' His family requests he request an MD program.",
     "Nick's clinic says he has 'a special interest in Thyroid diseases.' His family has a special interest in why he's not a doctor.",
@@ -315,13 +315,13 @@ NICK_JOKES: list[str] = [
     "Nick is the youngest, fittest Williams in this competition. When he loses, he doesn't even get an excuse.",
     "Nick's got a Philosophy minor and a History degree. That's a lot of thinking about the past for a guy with no future on this leaderboard.",
     "Nick's UO History degree focused on the past. His leaderboard position is focused on staying there.",
-    "Brysen is 6 years old and already knows his mom is a real doctor and his dad is 'something else.' That kid is going places. Unlike Nick on this leaderboard.",
-    "Nick's kids are 8 and 6. They already know the difference between MD and PA. Brutal honesty runs in the family.",
-    "Nick's daughter Elanor is 8. At her current trajectory she'll have more education than Nick by age 26.",
+    "Nick's youngest already knows his mom is a real doctor and his dad is 'something else.' That kid is going places. Unlike Nick on this leaderboard.",
+    "Nick's kids already know the difference between MD and PA. Brutal honesty runs in the family.",
+    "Nick's daughter is on a trajectory to have more education than him by age 26.",
     "PA-C stands for Physician Assistant - Certified. In the Williams family it stands for Pretty Adequate - Close enough.",
     "PA-C: two letters and a hyphen away from being taken seriously at family dinner.",
     "Nick is the only Williams brother whose credential needs a hyphen to seem longer.",
-    "Nick works in endocrinology at Salem Endocrinology. His job title has more syllables than his credential.",
+    "Nick works in endocrinology. His specialty has more syllables than his credential.",
     "Nick's bio says he enjoys 'being a collaborative part of patients' health journey.' That's a long way of saying 'supervised.'",
     "The Williams Thanksgiving seating chart: Doctor, Doctor, Doctor of Veterinary Medicine, CPA, and Nick.",
     "Nick studied History at UO. The most relevant period? The part where physicians' assistants didn't exist yet.",
