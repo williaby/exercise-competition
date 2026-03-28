@@ -282,3 +282,5 @@ output/
 tmp_cleanup/.tmp-*
 !tmp_cleanup/.gitkeep
 
+# Claude Code
+.claude/

@@ -25,6 +25,22 @@ updates:
     allow:
       - dependency-type: "all"
 
+  # Docker base images
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "03:30"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "ByronWilliamsCPA"
+    assignees:
+      - "ByronWilliamsCPA"
+    commit-message:
+      prefix: "chore(docker):"
+      include: "scope"
+
   # GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"

@@ -1,0 +1,5 @@
+[darglint]
+docstring_style=google
+strictness=long
+ignore=DAR101,DAR201,DAR301,DAR401
+ignore_regex=^(tests|scripts|benchmarks|tools)/.*$
