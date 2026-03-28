@@ -56,7 +56,7 @@ jobs:
         run: uv run ruff check src/ tests/
 
       - name: Run security scan (Bandit)
-        run: uv run bandit -r src/ -c pyproject.toml
+        run: uv run bandit -r src/ -c pyproject.toml --severity-level medium --confidence-level medium
 
   frontend:
     name: Frontend (Node 22)

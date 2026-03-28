@@ -19,10 +19,12 @@ if TYPE_CHECKING:
 
     from exercise_competition.models import WeeklySubmission
 
+from exercise_competition.core.config import settings
+
 COMPETITION_START = datetime.date(2026, 3, 30)
 COMPETITION_TZ = ZoneInfo("America/Chicago")
-TOTAL_WEEKS = 20
-COMPLIANCE_THRESHOLD = 2
+TOTAL_WEEKS = settings.week_max
+COMPLIANCE_THRESHOLD = settings.compliance_threshold
 
 DAY_FIELDS = (
     "monday",

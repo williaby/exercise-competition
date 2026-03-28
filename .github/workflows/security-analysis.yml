@@ -49,10 +49,13 @@ jobs:
         run: uv sync --all-extras
 
       - name: Run Bandit security scan
-        run: uv run bandit -r src/ -c pyproject.toml -f json -o bandit-report.json || true
+        run: |
+          uv run bandit -r src/ -c pyproject.toml -f json -o bandit-report.json --severity-level medium --confidence-level medium
+          # Also generate human-readable output for PR review
+          uv run bandit -r src/ -c pyproject.toml --severity-level medium --confidence-level medium
 
       - name: Run Safety dependency check
-        run: uv run safety check --output json > safety-report.json || true
+        run: uv run safety check --output json > safety-report.json
 
       - name: Upload security reports
         uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0

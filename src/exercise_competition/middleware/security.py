@@ -20,18 +20,18 @@ Usage:
 
 from __future__ import annotations
 
-import logging
 import time
 from collections import defaultdict
 from typing import TYPE_CHECKING
 
+import structlog
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.httpsredirect import HTTPSRedirectMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 from starlette.responses import JSONResponse, Response
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 if TYPE_CHECKING:
     from fastapi import FastAPI, Request
