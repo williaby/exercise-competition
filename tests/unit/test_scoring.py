@@ -51,32 +51,32 @@ class TestGetCurrentWeek:
         ("fake_now", "expected_week"),
         [
             pytest.param(
-                datetime.datetime(2026, 3, 29, 12, 0, tzinfo=COMPETITION_TZ),
+                datetime.datetime(2026, 3, 22, 12, 0, tzinfo=COMPETITION_TZ),
                 None,
                 id="before-competition",
             ),
             pytest.param(
-                datetime.datetime(2026, 3, 30, 8, 0, tzinfo=COMPETITION_TZ),
+                datetime.datetime(2026, 3, 23, 8, 0, tzinfo=COMPETITION_TZ),
                 1,
                 id="week-1-first-day",
             ),
             pytest.param(
-                datetime.datetime(2026, 4, 5, 23, 59, tzinfo=COMPETITION_TZ),
+                datetime.datetime(2026, 3, 29, 23, 59, tzinfo=COMPETITION_TZ),
                 1,
                 id="week-1-last-day",
             ),
             pytest.param(
-                datetime.datetime(2026, 4, 6, 0, 0, tzinfo=COMPETITION_TZ),
+                datetime.datetime(2026, 3, 30, 0, 0, tzinfo=COMPETITION_TZ),
                 2,
                 id="week-2-first-day",
             ),
             pytest.param(
-                datetime.datetime(2026, 8, 10, 12, 0, tzinfo=COMPETITION_TZ),
+                datetime.datetime(2026, 8, 3, 12, 0, tzinfo=COMPETITION_TZ),
                 20,
                 id="week-20",
             ),
             pytest.param(
-                datetime.datetime(2026, 8, 17, 0, 0, tzinfo=COMPETITION_TZ),
+                datetime.datetime(2026, 8, 10, 0, 0, tzinfo=COMPETITION_TZ),
                 None,
                 id="after-competition",
             ),

@@ -19,7 +19,7 @@ source_documents:
 
 ## Executive Summary
 
-A dead-simple web app where four brothers (Byron, Justin, Nick, Bruce Williams) check off which days they exercised each week and compete on a 20-week leaderboard. FastAPI + Jinja2 + SQLite monolith, deployed as a single Docker container on a Vultr VPS behind Cloudflare Zero Trust (no app-level auth, free HTTPS). Competition starts week of 2026-03-30.
+A dead-simple web app where four brothers (Byron, Justin, Nick, Bruce Williams) check off which days they exercised each week and compete on a 20-week leaderboard. FastAPI + Jinja2 + SQLite monolith, deployed as a single Docker container on a Vultr VPS behind Cloudflare Zero Trust (no app-level auth, free HTTPS). Competition starts week of 2026-03-23.
 
 ## Project Scope
 
@@ -281,7 +281,7 @@ class WeeklySubmission:
 ```
 
 **Competition Rules** (encoded in service layer):
-- Week 1 starts Monday 2026-03-30, ends Sunday 2026-08-16 (20 weeks)
+- Week 1 starts Monday 2026-03-23, ends Sunday 2026-08-09 (20 weeks)
 - Weekly compliance: 2+ days checked = 1 point
 - Tiebreaker: average exercise days per week
 - One submission per participant per week (append-only)
