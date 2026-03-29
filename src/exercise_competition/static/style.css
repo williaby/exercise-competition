@@ -96,8 +96,10 @@ body {
 }
 
 .brand-icon {
-    font-size: 1.6rem;
-    line-height: 1;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    object-fit: contain;
 }
 
 .brand-text {
