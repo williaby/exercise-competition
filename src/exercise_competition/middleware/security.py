@@ -80,10 +80,12 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             )
 
         # Content Security Policy: Prevent inline scripts (OWASP A03)
+        # 'unsafe-inline' for style-src: required for inline style attributes
+        # used in templates (progress bar width, form display).
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; "
             "script-src 'self'; "
-            "style-src 'self' https://fonts.googleapis.com; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
             "img-src 'self' data: https:; "
             "font-src 'self' https://fonts.gstatic.com; "
             "connect-src 'self' https://www.strava.com; "
