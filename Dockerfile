@@ -4,14 +4,14 @@
 # =============================================================================
 # Stage 1: Builder - Install dependencies
 # =============================================================================
-FROM python:3.12.8-slim AS builder
+FROM python:3.12.13-slim AS builder
 
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential=12.9 \
-    curl=7.88.1-10+deb12u14 \
-    git=1:2.39.5-0+deb12u3 \
+    build-essential \
+    curl \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
@@ -27,7 +27,7 @@ RUN uv sync --frozen --no-dev
 # =============================================================================
 # Stage 2: Runtime - Minimal production image
 # =============================================================================
-FROM python:3.12.8-slim
+FROM python:3.12.13-slim
 
 LABEL org.opencontainers.image.title="Exercise Competition"
 LABEL org.opencontainers.image.description="Weekly exercise competition tracker with leaderboard"
@@ -37,14 +37,12 @@ LABEL org.opencontainers.image.url="https://github.com/ByronWilliamsCPA/exercise
 LABEL org.opencontainers.image.source="https://github.com/ByronWilliamsCPA/exercise-competition"
 LABEL org.opencontainers.image.licenses="MIT"
 
-# Install curl for healthcheck, then clean up
+# Install curl for healthcheck, create non-root user, then clean up
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates=20230311+deb12u1 \
-    curl=7.88.1-10+deb12u14 \
-    && rm -rf /var/lib/apt/lists/*
-
-# Security: Create non-root user
-RUN groupadd -r appuser && useradd -r -g appuser -u 1000 appuser
+    ca-certificates \
+    curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd -r appuser && useradd -r -g appuser -u 1000 appuser
 
 WORKDIR /app
 
@@ -54,11 +52,9 @@ COPY --from=builder --chown=appuser:appuser /app/.venv /app/.venv
 # Copy application code
 COPY --chown=appuser:appuser . .
 
-# Create data directory for SQLite with correct ownership
-RUN mkdir -p /app/data && chown appuser:appuser /app/data
-
-# Remove pip/setuptools from runtime image
-RUN pip uninstall -y pip setuptools 2>/dev/null || true
+# Create data directory for SQLite and remove pip/setuptools from runtime image
+RUN mkdir -p /app/data && chown appuser:appuser /app/data \
+    && (pip uninstall -y pip setuptools 2>/dev/null || true)
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \

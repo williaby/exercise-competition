@@ -29,9 +29,11 @@
 
 set -euo pipefail
 
-echo "========================================"
+readonly SEPARATOR='========================================'
+
+echo "$SEPARATOR"
 echo "🔄 Cruft Update with Cleanup"
-echo "========================================"
+echo "$SEPARATOR"
 echo ""
 
 # Check if cruft is available
@@ -42,7 +44,7 @@ if ! command -v cruft &> /dev/null; then
 fi
 
 # Check if we're in a cruft-managed project
-if [ ! -f ".cruft.json" ]; then
+if [[ ! -f ".cruft.json" ]]; then
     echo "❌ .cruft.json not found"
     echo "   This script must be run from a cruft-managed project root"
     exit 1
@@ -56,7 +58,7 @@ cruft update "$@"
 update_result=$?
 set -e  # Re-enable exit on error
 
-if [ $update_result -ne 0 ]; then
+if [[ $update_result -ne 0 ]]; then
     echo ""
     echo "⚠️  cruft update returned non-zero exit code: $update_result"
     echo "   This may indicate conflicts or skipped files"
@@ -68,13 +70,13 @@ echo ""
 echo "🧹 Running conditional file cleanup..."
 echo ""
 
-if [ -f "scripts/cleanup_conditional_files.py" ]; then
+if [[ -f "scripts/cleanup_conditional_files.py" ]]; then
     set +e  # Temporarily disable exit on error to capture cleanup result
     python scripts/cleanup_conditional_files.py
     cleanup_result=$?
     set -e  # Re-enable exit on error
 
-    if [ $cleanup_result -ne 0 ]; then
+    if [[ $cleanup_result -ne 0 ]]; then
         echo ""
         echo "⚠️  Cleanup script returned non-zero exit code: $cleanup_result"
     fi
@@ -84,9 +86,9 @@ else
 fi
 
 echo ""
-echo "========================================"
+echo "$SEPARATOR"
 echo "✅ Cruft update complete!"
-echo "========================================"
+echo "$SEPARATOR"
 echo ""
 echo "Next steps:"
 echo "  1. Review changes: git status"

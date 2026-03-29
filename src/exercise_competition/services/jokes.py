@@ -331,4 +331,4 @@ NICK_JOKES: list[str] = [
 
 def get_random_joke() -> str:
     """Return a random joke from the collection."""
-    return random.choice(NICK_JOKES)  # noqa: S311
+    return random.choice(NICK_JOKES)  # noqa: S311  # NOSONAR(S2245) non-security random for joke selection

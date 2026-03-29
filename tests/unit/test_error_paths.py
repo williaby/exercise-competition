@@ -24,7 +24,7 @@ from exercise_competition.utils.logging import setup_logging
 
 def _run_session_with_error(error_cls: type[Exception], msg: str) -> MagicMock:
     """Run get_session() with an injected error, returning the mock session."""
-    mock_session = MagicMock()
+    mock_session = MagicMock(spec=["rollback", "close", "commit"])
     mock_factory = MagicMock(return_value=mock_session)
 
     with patch(
@@ -67,10 +67,10 @@ class TestHealthCheckFailure:
 
     def test_check_database_returns_error_on_failure(self) -> None:
         """check_database should return a failed ReadinessCheck on exception."""
-        mock_session = MagicMock()
+        mock_session = MagicMock(spec=["execute"])
         mock_session.execute.side_effect = RuntimeError("connection refused")
 
-        mock_ctx = MagicMock()
+        mock_ctx = MagicMock(spec=["__enter__", "__exit__"])
         mock_ctx.__enter__ = MagicMock(return_value=mock_session)
         mock_ctx.__exit__ = MagicMock(return_value=False)
 
@@ -82,7 +82,7 @@ class TestHealthCheckFailure:
             assert isinstance(result, ReadinessCheck)
             assert result.status is False
             assert result.error == "Database connectivity check failed"
-            assert result.latency_ms is not None
+            assert result.latency_ms >= 0
 
     def test_readiness_503_when_db_down(self) -> None:
         """Readiness endpoint should return 503 when database check fails."""

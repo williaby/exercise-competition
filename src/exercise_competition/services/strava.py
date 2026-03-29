@@ -30,7 +30,7 @@ from exercise_competition.utils.logging import get_logger
 logger = get_logger(__name__)
 
 STRAVA_AUTH_URL = "https://www.strava.com/oauth/authorize"
-STRAVA_TOKEN_URL = "https://www.strava.com/oauth/token"  # noqa: S105
+STRAVA_TOKEN_URL = "https://www.strava.com/oauth/token"  # noqa: S105  # NOSONAR(S2068) URL constant, not a credential
 STRAVA_API_BASE = "https://www.strava.com/api/v3"
 STRAVA_DEAUTH_URL = "https://www.strava.com/oauth/deauthorize"
 

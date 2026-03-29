@@ -43,10 +43,13 @@ dev = [
     # Testing
     "pytest>=7.4.0",
     "pytest-cov>=4.1.0",
+    "pytest-mock>=3.12.0",
+    "pytest-randomly>=3.15.0",
     "pytest-asyncio>=0.21.0",
     "pytest-xdist>=3.3.0",
     "pytest-playwright>=0.7.2",
     "hypothesis>=6.82.0",
+    "freezegun>=1.2.0",
 
     # Code Quality (always included)
     "ruff>=0.9.0",
@@ -60,7 +63,9 @@ dev = [
     "pre-commit>=3.3.0",
     # Documentation
     # Development Tools
-    "interrogate>=1.7.0",
+    # interrogate removed from venv deps — its hard dependency on the deprecated
+    # and vulnerable `py` package (PYSEC-2022-42969, no fix) makes it a security
+    # risk. The pre-commit hook still runs interrogate in its own isolated env.
     "jupyter>=1.0.0",
     "ipykernel>=6.25.0",
     "safety>=3.7.0",
@@ -434,7 +439,9 @@ addopts = [
     "-ra",
     "--strict-markers",
     "--strict-config",
+    "--import-mode=importlib",
     "--cov=src/exercise_competition",
+    "--cov-branch",
     "--cov-report=html",
     "--cov-report=term-missing:skip-covered",
     "--cov-report=xml",
@@ -453,8 +460,8 @@ markers = [
 ]
 
 # Coverage Configuration
-# Note: Coverage source is specified via pytest's --cov argument in addopts above
 [tool.coverage.run]
+source_pkgs = ["exercise_competition"]
 branch = true
 omit = [
     # Test files

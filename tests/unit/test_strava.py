@@ -113,7 +113,6 @@ class TestStravaTokenModel:
         seeded_session.commit()
 
         result = seeded_session.query(StravaToken).first()
-        assert result is not None
         assert result.participant_id == p.id
         assert result.strava_athlete_id == 12345
         assert result.scope == "activity:read"
@@ -181,7 +180,6 @@ class TestStravaActivityModel:
         seeded_session.commit()
 
         result = seeded_session.query(StravaActivity).first()
-        assert result is not None
         assert result.activity_type == "Run"
         assert result.strava_activity_id == 987654
 
@@ -200,7 +198,7 @@ class TestStravaActivityModel:
         )
         seeded_session.add(activity)
         seeded_session.commit()
-        assert activity.duration_minutes == 30.0
+        assert activity.duration_minutes == pytest.approx(30.0)
 
     def test_repr(self, seeded_session):
         p = seeded_session.query(Participant).first()
@@ -264,7 +262,7 @@ class TestExchangeStravaCode:
     def test_successful_exchange(self):
         from exercise_competition.services.strava import exchange_strava_code
 
-        mock_response = MagicMock()
+        mock_response = MagicMock(spec=httpx.Response)
         mock_response.json.return_value = {
             "access_token": "tok",
             "refresh_token": "ref",
@@ -278,7 +276,7 @@ class TestExchangeStravaCode:
                 "exercise_competition.services.strava.httpx.Client"
             ) as mock_client_cls,
         ):
-            mock_client = MagicMock()
+            mock_client = MagicMock(spec=["post", "get", "__enter__", "__exit__"])
             mock_client.__enter__ = MagicMock(return_value=mock_client)
             mock_client.__exit__ = MagicMock(return_value=False)
             mock_client.post.return_value = mock_response
@@ -291,7 +289,7 @@ class TestExchangeStravaCode:
     def test_exchange_raises_on_http_error(self):
         from exercise_competition.services.strava import exchange_strava_code
 
-        mock_response = MagicMock()
+        mock_response = MagicMock(spec=httpx.Response)
         mock_response.raise_for_status.side_effect = httpx.HTTPStatusError(
             "401", request=MagicMock(), response=MagicMock()
         )
@@ -302,7 +300,7 @@ class TestExchangeStravaCode:
                 "exercise_competition.services.strava.httpx.Client"
             ) as mock_client_cls,
         ):
-            mock_client = MagicMock()
+            mock_client = MagicMock(spec=["post", "get", "__enter__", "__exit__"])
             mock_client.__enter__ = MagicMock(return_value=mock_client)
             mock_client.__exit__ = MagicMock(return_value=False)
             mock_client.post.return_value = mock_response
@@ -369,7 +367,7 @@ class TestRefreshStravaToken:
         session.add(token)
         session.commit()
 
-        mock_response = MagicMock()
+        mock_response = MagicMock(spec=httpx.Response)
         mock_response.json.return_value = {
             "access_token": "new_access",
             "refresh_token": "new_refresh",
@@ -379,7 +377,7 @@ class TestRefreshStravaToken:
         with patch(
             "exercise_competition.services.strava.httpx.Client"
         ) as mock_client_cls:
-            mock_client = MagicMock()
+            mock_client = MagicMock(spec=["post", "get", "__enter__", "__exit__"])
             mock_client.__enter__ = MagicMock(return_value=mock_client)
             mock_client.__exit__ = MagicMock(return_value=False)
             mock_client.post.return_value = mock_response
@@ -408,7 +406,7 @@ class TestRefreshStravaToken:
         )
 
         new_expires = int(time.time()) + 7200
-        mock_response = MagicMock()
+        mock_response = MagicMock(spec=httpx.Response)
         mock_response.json.return_value = {
             "access_token": "fresh_access",
             "refresh_token": "fresh_refresh",
@@ -418,7 +416,7 @@ class TestRefreshStravaToken:
         with patch(
             "exercise_competition.services.strava.httpx.Client"
         ) as mock_client_cls:
-            mock_client = MagicMock()
+            mock_client = MagicMock(spec=["post", "get", "__enter__", "__exit__"])
             mock_client.__enter__ = MagicMock(return_value=mock_client)
             mock_client.__exit__ = MagicMock(return_value=False)
             mock_client.post.return_value = mock_response
@@ -495,13 +493,13 @@ class TestFetchStravaActivities:
         )
 
         activities = [{"id": i, "name": f"Activity {i}"} for i in range(5)]
-        mock_resp = MagicMock()
+        mock_resp = MagicMock(spec=httpx.Response)
         mock_resp.json.return_value = activities
 
         with patch(
             "exercise_competition.services.strava.httpx.Client"
         ) as mock_client_cls:
-            mock_client = MagicMock()
+            mock_client = MagicMock(spec=["post", "get", "__enter__", "__exit__"])
             mock_client.__enter__ = MagicMock(return_value=mock_client)
             mock_client.__exit__ = MagicMock(return_value=False)
             mock_client.get.return_value = mock_resp
@@ -526,15 +524,15 @@ class TestFetchStravaActivities:
         page1 = [{"id": i} for i in range(100)]
         page2 = [{"id": i} for i in range(100, 130)]
 
-        mock_resp1 = MagicMock()
+        mock_resp1 = MagicMock(spec=httpx.Response)
         mock_resp1.json.return_value = page1
-        mock_resp2 = MagicMock()
+        mock_resp2 = MagicMock(spec=httpx.Response)
         mock_resp2.json.return_value = page2
 
         with patch(
             "exercise_competition.services.strava.httpx.Client"
         ) as mock_client_cls:
-            mock_client = MagicMock()
+            mock_client = MagicMock(spec=["post", "get", "__enter__", "__exit__"])
             mock_client.__enter__ = MagicMock(return_value=mock_client)
             mock_client.__exit__ = MagicMock(return_value=False)
             mock_client.get.side_effect = [mock_resp1, mock_resp2]
@@ -596,7 +594,6 @@ class TestUpdateWeeklySubmission:
         seeded_session.flush()
 
         sub = seeded_session.query(WeeklySubmission).first()
-        assert sub is not None
         assert sub.monday is True
         assert sub.tuesday is False
 
@@ -690,7 +687,7 @@ class TestDisconnectStrava:
         with patch(
             "exercise_competition.services.strava.httpx.Client"
         ) as mock_client_cls:
-            mock_client = MagicMock()
+            mock_client = MagicMock(spec=["post", "get", "__enter__", "__exit__"])
             mock_client.__enter__ = MagicMock(return_value=mock_client)
             mock_client.__exit__ = MagicMock(return_value=False)
             mock_client_cls.return_value = mock_client
@@ -724,7 +721,7 @@ class TestDisconnectStrava:
         with patch(
             "exercise_competition.services.strava.httpx.Client"
         ) as mock_client_cls:
-            mock_client = MagicMock()
+            mock_client = MagicMock(spec=["post", "get", "__enter__", "__exit__"])
             mock_client.__enter__ = MagicMock(return_value=mock_client)
             mock_client.__exit__ = MagicMock(return_value=False)
             mock_client.post.side_effect = httpx.HTTPError("Connection error")
@@ -783,12 +780,10 @@ class TestSyncParticipantActivities:
         assert count == 1
         # Check activity was stored
         stored = session.query(StravaActivity).first()
-        assert stored is not None
         assert stored.strava_activity_id == 1001
 
         # Check weekly submission was created
         sub = session.query(WeeklySubmission).first()
-        assert sub is not None
         assert sub.wednesday is True
 
     def test_skips_short_activities(self, patched_session):
@@ -1045,7 +1040,7 @@ class TestStravaAPIRoutes:
             patch("exercise_competition.api.strava.get_session") as mock_get_session,
         ):
             mock_settings.strava_client_id = "test_id"
-            mock_session = MagicMock()
+            mock_session = MagicMock(spec=["__enter__", "__exit__", "get"])
             mock_session.__enter__ = MagicMock(return_value=mock_session)
             mock_session.__exit__ = MagicMock(return_value=False)
             mock_session.get.return_value = None
@@ -1056,7 +1051,7 @@ class TestStravaAPIRoutes:
         assert "invalid_participant" in resp.headers["location"]
 
     def test_strava_connect_success(self, client):
-        mock_participant = MagicMock()
+        mock_participant = MagicMock(spec=Participant)
 
         with (
             patch("exercise_competition.api.strava.settings") as mock_settings,
@@ -1067,7 +1062,7 @@ class TestStravaAPIRoutes:
             ),
         ):
             mock_settings.strava_client_id = "test_id"
-            mock_session = MagicMock()
+            mock_session = MagicMock(spec=["__enter__", "__exit__", "get"])
             mock_session.__enter__ = MagicMock(return_value=mock_session)
             mock_session.__exit__ = MagicMock(return_value=False)
             mock_session.get.return_value = mock_participant
@@ -1094,7 +1089,7 @@ class TestStravaAPIRoutes:
 
     def test_strava_callback_invalid_participant(self, client):
         with patch("exercise_competition.api.strava.get_session") as mock_get_session:
-            mock_session = MagicMock()
+            mock_session = MagicMock(spec=["__enter__", "__exit__", "get"])
             mock_session.__enter__ = MagicMock(return_value=mock_session)
             mock_session.__exit__ = MagicMock(return_value=False)
             mock_session.get.return_value = None
@@ -1105,7 +1100,7 @@ class TestStravaAPIRoutes:
         assert "invalid_participant" in resp.headers["location"]
 
     def test_strava_callback_success(self, client):
-        mock_participant = MagicMock()
+        mock_participant = MagicMock(spec=Participant)
 
         with (
             patch("exercise_competition.api.strava.get_session") as mock_get_session,
@@ -1124,7 +1119,7 @@ class TestStravaAPIRoutes:
                 return_value=5,
             ),
         ):
-            mock_session = MagicMock()
+            mock_session = MagicMock(spec=["__enter__", "__exit__", "get"])
             mock_session.__enter__ = MagicMock(return_value=mock_session)
             mock_session.__exit__ = MagicMock(return_value=False)
             mock_session.get.return_value = mock_participant
@@ -1135,7 +1130,7 @@ class TestStravaAPIRoutes:
         assert "connected" in resp.headers["location"]
 
     def test_strava_callback_exchange_failure(self, client):
-        mock_participant = MagicMock()
+        mock_participant = MagicMock(spec=Participant)
 
         with (
             patch("exercise_competition.api.strava.get_session") as mock_get_session,
@@ -1144,7 +1139,7 @@ class TestStravaAPIRoutes:
                 side_effect=RuntimeError("exchange failed"),
             ),
         ):
-            mock_session = MagicMock()
+            mock_session = MagicMock(spec=["__enter__", "__exit__", "get"])
             mock_session.__enter__ = MagicMock(return_value=mock_session)
             mock_session.__exit__ = MagicMock(return_value=False)
             mock_session.get.return_value = mock_participant
@@ -1155,7 +1150,7 @@ class TestStravaAPIRoutes:
         assert "auth_error" in resp.headers["location"]
 
     def test_strava_callback_sync_failure_still_connects(self, client):
-        mock_participant = MagicMock()
+        mock_participant = MagicMock(spec=Participant)
 
         with (
             patch("exercise_competition.api.strava.get_session") as mock_get_session,
@@ -1174,7 +1169,7 @@ class TestStravaAPIRoutes:
                 side_effect=RuntimeError("sync failed"),
             ),
         ):
-            mock_session = MagicMock()
+            mock_session = MagicMock(spec=["__enter__", "__exit__", "get"])
             mock_session.__enter__ = MagicMock(return_value=mock_session)
             mock_session.__exit__ = MagicMock(return_value=False)
             mock_session.get.return_value = mock_participant

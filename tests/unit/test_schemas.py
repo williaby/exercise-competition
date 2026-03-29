@@ -35,11 +35,11 @@ class TestSubmissionForm:
         assert form.sunday is False
 
     def test_week_too_low(self):
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValidationError, match="greater than or equal to 1"):
             SubmissionForm(participant_name="Test", week_number=0)
 
     def test_week_too_high(self):
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValidationError, match="less than or equal to 20"):
             SubmissionForm(participant_name="Test", week_number=21)
 
     def test_week_boundaries_valid(self):
@@ -49,9 +49,9 @@ class TestSubmissionForm:
         assert form20.week_number == 20
 
     def test_missing_participant_name(self):
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValidationError, match="participant_name"):
             SubmissionForm(week_number=1)  # type: ignore[call-arg]
 
     def test_missing_week_number(self):
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValidationError, match="week_number"):
             SubmissionForm(participant_name="Test")  # type: ignore[call-arg]

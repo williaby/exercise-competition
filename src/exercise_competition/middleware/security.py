@@ -299,6 +299,7 @@ class SSRFPreventionMiddleware(BaseHTTPMiddleware):
     """
 
     # Blocked hostnames (case-insensitive)
+    # NOSONAR(S1313) IPs are intentional SSRF prevention blocklist entries
     BLOCKED_HOSTS: set[str] = {
         "localhost",
         "127.0.0.1",

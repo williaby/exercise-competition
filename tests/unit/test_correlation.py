@@ -132,7 +132,7 @@ class TestCorrelationContextProcessor:
         try:
             event_dict: dict = {"event": "test"}
             result = correlation_context_processor(
-                MagicMock(),
+                MagicMock(spec=[]),  # Unused logger arg; must satisfy WrappedLogger type
                 "info",
                 event_dict,
             )
@@ -152,7 +152,7 @@ class TestCorrelationContextProcessor:
         try:
             event_dict: dict = {"event": "test"}
             result = correlation_context_processor(
-                MagicMock(),
+                MagicMock(spec=[]),  # Unused logger arg; must satisfy WrappedLogger type
                 "info",
                 event_dict,
             )
@@ -172,7 +172,7 @@ class TestCorrelationContextProcessor:
         try:
             event_dict: dict = {"event": "test"}
             result = correlation_context_processor(
-                MagicMock(),
+                MagicMock(spec=[]),  # Unused logger arg; must satisfy WrappedLogger type
                 "info",
                 event_dict,
             )
@@ -192,7 +192,7 @@ class TestCorrelationContextProcessor:
         try:
             event_dict: dict = {"event": "test"}
             result = correlation_context_processor(
-                MagicMock(),
+                MagicMock(spec=[]),  # Unused logger arg; must satisfy WrappedLogger type
                 "info",
                 event_dict,
             )
@@ -221,7 +221,7 @@ class TestCorrelationContextProcessor:
         try:
             event_dict: dict = {"event": "test"}
             result = correlation_context_processor(
-                MagicMock(),
+                MagicMock(spec=[]),  # Unused logger arg; must satisfy WrappedLogger type
                 "info",
                 event_dict,
             )
@@ -289,17 +289,17 @@ class TestCorrelationMiddleware:
             CorrelationMiddleware,
         )
 
-        middleware = CorrelationMiddleware(app=MagicMock())
+        middleware = CorrelationMiddleware(app=MagicMock(spec=["__call__"]))
 
         # Create mock request without correlation headers
-        mock_request = MagicMock()
+        mock_request = MagicMock(spec=["headers"])
         mock_request.headers = {}
 
         # Create mock response
-        mock_response = MagicMock()
+        mock_response = MagicMock(spec=["headers"])
         mock_response.headers = {}
 
-        async def mock_call_next(request):
+        async def mock_call_next(request):  # NOSONAR(S7503) must be async; middleware awaits this
             return mock_response
 
         response = await middleware.dispatch(mock_request, mock_call_next)
@@ -317,16 +317,16 @@ class TestCorrelationMiddleware:
             CorrelationMiddleware,
         )
 
-        middleware = CorrelationMiddleware(app=MagicMock())
+        middleware = CorrelationMiddleware(app=MagicMock(spec=["__call__"]))
 
         # Create mock request with correlation header
-        mock_request = MagicMock()
+        mock_request = MagicMock(spec=["headers"])
         mock_request.headers = {CORRELATION_ID_HEADER: "incoming-corr-id"}
 
-        mock_response = MagicMock()
+        mock_response = MagicMock(spec=["headers"])
         mock_response.headers = {}
 
-        async def mock_call_next(request):
+        async def mock_call_next(request):  # NOSONAR(S7503) must be async; middleware awaits this
             return mock_response
 
         response = await middleware.dispatch(mock_request, mock_call_next)
@@ -343,16 +343,16 @@ class TestCorrelationMiddleware:
             CorrelationMiddleware,
         )
 
-        middleware = CorrelationMiddleware(app=MagicMock())
+        middleware = CorrelationMiddleware(app=MagicMock(spec=["__call__"]))
 
         # Create mock request with only request ID header
-        mock_request = MagicMock()
+        mock_request = MagicMock(spec=["headers"])
         mock_request.headers = {REQUEST_ID_HEADER: "incoming-req-id"}
 
-        mock_response = MagicMock()
+        mock_response = MagicMock(spec=["headers"])
         mock_response.headers = {}
 
-        async def mock_call_next(request):
+        async def mock_call_next(request):  # NOSONAR(S7503) must be async; middleware awaits this
             return mock_response
 
         response = await middleware.dispatch(mock_request, mock_call_next)
@@ -369,15 +369,15 @@ class TestCorrelationMiddleware:
             CorrelationMiddleware,
         )
 
-        middleware = CorrelationMiddleware(app=MagicMock())
+        middleware = CorrelationMiddleware(app=MagicMock(spec=["__call__"]))
 
-        mock_request = MagicMock()
+        mock_request = MagicMock(spec=["headers"])
         mock_request.headers = {}
 
-        mock_response = MagicMock()
+        mock_response = MagicMock(spec=["headers"])
         mock_response.headers = {}
 
-        async def mock_call_next(request):
+        async def mock_call_next(request):  # NOSONAR(S7503) must be async; middleware awaits this
             return mock_response
 
         response = await middleware.dispatch(mock_request, mock_call_next)
@@ -393,15 +393,15 @@ class TestCorrelationMiddleware:
             CorrelationMiddleware,
         )
 
-        middleware = CorrelationMiddleware(app=MagicMock())
+        middleware = CorrelationMiddleware(app=MagicMock(spec=["__call__"]))
 
-        mock_request = MagicMock()
+        mock_request = MagicMock(spec=["headers"])
         mock_request.headers = {TRACE_ID_HEADER: "trace-123"}
 
-        mock_response = MagicMock()
+        mock_response = MagicMock(spec=["headers"])
         mock_response.headers = {}
 
-        async def mock_call_next(request):
+        async def mock_call_next(request):  # NOSONAR(S7503) must be async; middleware awaits this
             return mock_response
 
         response = await middleware.dispatch(mock_request, mock_call_next)
@@ -417,15 +417,15 @@ class TestCorrelationMiddleware:
             CorrelationMiddleware,
         )
 
-        middleware = CorrelationMiddleware(app=MagicMock())
+        middleware = CorrelationMiddleware(app=MagicMock(spec=["__call__"]))
 
-        mock_request = MagicMock()
+        mock_request = MagicMock(spec=["headers"])
         mock_request.headers = {SPAN_ID_HEADER: "span-456"}
 
-        mock_response = MagicMock()
+        mock_response = MagicMock(spec=["headers"])
         mock_response.headers = {}
 
-        async def mock_call_next(request):
+        async def mock_call_next(request):  # NOSONAR(S7503) must be async; middleware awaits this
             return mock_response
 
         response = await middleware.dispatch(mock_request, mock_call_next)
@@ -440,12 +440,12 @@ class TestCorrelationMiddleware:
             CorrelationMiddleware,
         )
 
-        middleware = CorrelationMiddleware(app=MagicMock())
+        middleware = CorrelationMiddleware(app=MagicMock(spec=["__call__"]))
 
-        mock_request = MagicMock()
+        mock_request = MagicMock(spec=["headers"])
         mock_request.headers = {"X-Correlation-ID": "test-corr"}
 
-        async def mock_call_next_error(request):
+        async def mock_call_next_error(request):  # NOSONAR(S7503) must be async; middleware awaits this
             raise ValueError("Test error")
 
         with pytest.raises(ValueError, match="Test error"):

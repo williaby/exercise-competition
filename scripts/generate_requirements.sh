@@ -50,15 +50,15 @@ echo -e "${GREEN}Generating requirements files from uv.lock...${NC}"
 
 # Check if uv is available
 if ! command -v uv &> /dev/null; then
-    echo -e "${RED}Error: uv is not installed or not in PATH${NC}"
-    echo "Install uv: curl -LsSf https://astral.sh/uv/install.sh | sh"
+    echo -e "${RED}Error: uv is not installed or not in PATH${NC}" >&2
+    echo "Install uv: curl -LsSf https://astral.sh/uv/install.sh | sh" >&2
     exit 1
 fi
 
 # Check if uv.lock exists
 if [[ ! -f "uv.lock" ]]; then
-    echo -e "${RED}Error: uv.lock not found${NC}"
-    echo "Run 'uv sync' to create the lock file first"
+    echo -e "${RED}Error: uv.lock not found${NC}" >&2
+    echo "Run 'uv sync' to create the lock file first" >&2
     exit 1
 fi
 

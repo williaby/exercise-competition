@@ -163,9 +163,12 @@ class TestLoggingJSON:
         # Configure with JSON logging to cover the JSON renderer branch
         setup_logging(level="INFO", json_logs=True)
 
-        # Should complete without errors
-        # The JSON renderer path (line 87) is now covered
-        assert True
+        # Verify JSON renderer is the final processor
+        import structlog
+
+        config = structlog.get_config()
+        last_processor = config["processors"][-1]
+        assert type(last_processor).__name__ == "JSONRenderer"
 
 
 class TestExampleIntegration:

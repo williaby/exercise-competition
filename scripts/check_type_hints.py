@@ -78,12 +78,35 @@ def has_future_annotations_import(content: str) -> bool:
         return False
 
     for node in ast.walk(tree):
-        if isinstance(node, ast.ImportFrom):
-            if node.module == "__future__":
-                for alias in node.names:
-                    if alias.name == "annotations":
-                        return True
+        if (
+            isinstance(node, ast.ImportFrom)
+            and node.module == "__future__"
+            and any(alias.name == "annotations" for alias in node.names)
+        ):
+            return True
     return False
+
+
+def _has_union_syntax_via_ast(content: str) -> bool:
+    """Detect | union syntax via AST parsing."""
+    try:
+        tree = ast.parse(content)
+        visitor = UnionSyntaxVisitor()
+        visitor.visit(tree)
+        return visitor.has_union_syntax
+    except SyntaxError:
+        return False
+
+
+def _has_union_syntax_via_regex(content: str) -> bool:
+    """Detect | union syntax via regex patterns for common type hints."""
+    patterns = [
+        r":\s*\w+\s*\|\s*\w+",  # : Type | Type
+        r"->\s*\w+\s*\|\s*\w+",  # -> Type | Type
+        r"\[\s*\w+\s*\|\s*\w+",  # [Type | Type
+        r"=\s*\w+\s*\|\s*\w+",  # = Type | Type (in function params)
+    ]
+    return any(re.search(pattern, content) for pattern in patterns)
 
 
 def has_union_pipe_syntax(content: str) -> bool:
@@ -93,30 +116,7 @@ def has_union_pipe_syntax(content: str) -> bool:
     1. AST parsing to detect BinOp with BitOr in annotation contexts
     2. Regex pattern matching for common type hint patterns
     """
-    # Method 1: AST-based detection
-    try:
-        tree = ast.parse(content)
-        visitor = UnionSyntaxVisitor()
-        visitor.visit(tree)
-        if visitor.has_union_syntax:
-            return True
-    except SyntaxError:
-        pass
-
-    # Method 2: Regex patterns for common type hint usage
-    # Match patterns like: ": int | str", "-> bool | None", "[int | float]"
-    patterns = [
-        r":\s*\w+\s*\|\s*\w+",  # : Type | Type
-        r"->\s*\w+\s*\|\s*\w+",  # -> Type | Type
-        r"\[\s*\w+\s*\|\s*\w+",  # [Type | Type
-        r"=\s*\w+\s*\|\s*\w+",  # = Type | Type (in function params)
-    ]
-
-    for pattern in patterns:
-        if re.search(pattern, content):
-            return True
-
-    return False
+    return _has_union_syntax_via_ast(content) or _has_union_syntax_via_regex(content)
 
 
 def check_file(file_path: Path) -> tuple[bool, str]:
@@ -139,6 +139,47 @@ def check_file(file_path: Path) -> tuple[bool, str]:
     return True, "OK"
 
 
+def _find_import_insert_index(content: str, lines: list[str]) -> int:
+    """Find the line index where a future import should be inserted."""
+    insert_index = 0
+
+    # Skip shebang
+    if lines and lines[0].startswith("#!"):
+        insert_index = 1
+
+    # Skip module docstring
+    tree = ast.parse(content)
+    if (
+        tree.body
+        and isinstance(tree.body[0], ast.Expr)
+        and isinstance(tree.body[0].value, ast.Constant)
+    ):
+        docstring_end = tree.body[0].end_lineno or 0
+        insert_index = max(insert_index, docstring_end)
+
+    # Skip any existing __future__ imports
+    for i, line in enumerate(lines[insert_index:], start=insert_index):
+        stripped = line.strip()
+        if stripped.startswith("from __future__ import"):
+            continue
+        if stripped and not stripped.startswith("#"):
+            insert_index = i
+            break
+
+    return insert_index
+
+
+def _validate_file_path(file_path: Path) -> bool:
+    """Validate that file path is within the current working directory."""
+    if not file_path.resolve().is_relative_to(Path.cwd()):
+        print(
+            f"Security: Path {file_path} is outside current directory",
+            file=sys.stderr,
+        )
+        return False
+    return True
+
+
 def add_future_import(file_path: Path) -> bool:
     """Add 'from __future__ import annotations' to a file.
 
@@ -146,59 +187,73 @@ def add_future_import(file_path: Path) -> bool:
         True if the import was added, False otherwise
     """
     try:
-        content = file_path.read_text(encoding="utf-8")
+        # Security: Validate file path before reading
+        if not _validate_file_path(file_path):
+            return False
+
+        content = file_path.read_text(
+            encoding="utf-8"
+        )  # NOSONAR — path validated via is_relative_to above
         lines = content.splitlines(keepends=True)
 
-        # Find the right place to insert the import
-        # After shebang and module docstring, before other imports
-        insert_index = 0
+        insert_index = _find_import_insert_index(content, lines)
 
-        # Skip shebang
-        if lines and lines[0].startswith("#!"):
-            insert_index = 1
-
-        # Skip module docstring
-        tree = ast.parse(content)
-        if (
-            tree.body
-            and isinstance(tree.body[0], ast.Expr)
-            and isinstance(tree.body[0].value, ast.Constant)
-        ):
-            # Find the line after the docstring
-            docstring_end = tree.body[0].end_lineno or 0
-            insert_index = max(insert_index, docstring_end)
-
-        # Skip any existing __future__ imports
-        for i, line in enumerate(lines[insert_index:], start=insert_index):
-            if line.strip().startswith("from __future__ import"):
-                continue
-            if line.strip() and not line.strip().startswith("#"):
-                insert_index = i
-                break
-
-        # Insert the import
         import_line = "from __future__ import annotations\n"
-        if insert_index > 0 and not lines[insert_index - 1].strip():
-            # If there's already a blank line, don't add another
-            lines.insert(insert_index, import_line)
-        else:
-            # Add the import with a blank line after it
-            lines.insert(insert_index, import_line)
+        lines.insert(insert_index, import_line)
+        if insert_index == 0 or lines[insert_index - 1].strip():
             lines.insert(insert_index + 1, "\n")
-
-        # Security: Validate file path is within expected directory
-        if not file_path.resolve().is_relative_to(Path.cwd()):
-            print(
-                f"Security: Path {file_path} is outside current directory",
-                file=sys.stderr,
-            )
-            return False
 
         file_path.write_text("".join(lines), encoding="utf-8")
         return True
     except Exception as e:
         print(f"Error adding import to {file_path}: {e}", file=sys.stderr)
         return False
+
+
+def _collect_python_files(src_dir: Path, include_tests: bool) -> list[Path]:
+    """Collect Python files from source and optionally test directories."""
+    python_files: list[Path] = []
+    if src_dir.exists():
+        python_files.extend(src_dir.rglob("*.py"))
+    if include_tests:
+        tests_dir = Path("tests")
+        if tests_dir.exists():
+            python_files.extend(tests_dir.rglob("*.py"))
+    return [f for f in python_files if "__pycache__" not in str(f)]
+
+
+def _process_noncompliant_file(
+    file_path: Path, message: str, fix: bool, violations: list, fixed: list
+) -> None:
+    """Handle a non-compliant file: fix it or record the violation."""
+    if not fix:
+        violations.append((file_path, message))
+        print(f"✗ {file_path}: {message}", file=sys.stderr)
+        return
+
+    if add_future_import(file_path):
+        fixed.append(file_path)
+        print(f"✓ Fixed: {file_path}")
+    else:
+        violations.append((file_path, message))
+        print(f"✗ Failed to fix: {file_path}: {message}", file=sys.stderr)
+
+
+def _print_summary(violations: list, fixed: list) -> int:
+    """Print summary and return exit code."""
+    print()
+    if violations:
+        print(f"Found {len(violations)} violation(s):")
+        for file_path, message in violations:
+            print(f"  - {file_path}: {message}")
+        print()
+        print("Run with --fix to automatically add the import")
+        return 1
+    if fixed:
+        print(f"Fixed {len(fixed)} file(s)")
+        return 0
+    print("All files compliant ✓")
+    return 0
 
 
 def main() -> int:
@@ -224,57 +279,20 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    # Find all Python files
-    python_files = []
-
-    if args.src_dir.exists():
-        python_files.extend(args.src_dir.rglob("*.py"))
-
-    if args.include_tests:
-        tests_dir = Path("tests")
-        if tests_dir.exists():
-            python_files.extend(tests_dir.rglob("*.py"))
-
+    python_files = _collect_python_files(args.src_dir, args.include_tests)
     if not python_files:
         print(f"No Python files found in {args.src_dir}", file=sys.stderr)
         return 1
 
-    violations = []
-    fixed = []
+    violations: list[tuple[Path, str]] = []
+    fixed: list[Path] = []
 
     for file_path in python_files:
-        # Skip __pycache__ and other generated files
-        if "__pycache__" in str(file_path):
-            continue
-
         is_compliant, message = check_file(file_path)
-
         if not is_compliant:
-            if args.fix:
-                if add_future_import(file_path):
-                    fixed.append(file_path)
-                    print(f"✓ Fixed: {file_path}")
-                else:
-                    violations.append((file_path, message))
-                    print(f"✗ Failed to fix: {file_path}: {message}", file=sys.stderr)
-            else:
-                violations.append((file_path, message))
-                print(f"✗ {file_path}: {message}", file=sys.stderr)
+            _process_noncompliant_file(file_path, message, args.fix, violations, fixed)
 
-    # Print summary
-    print()
-    if violations:
-        print(f"Found {len(violations)} violation(s):")
-        for file_path, message in violations:
-            print(f"  - {file_path}: {message}")
-        print()
-        print("Run with --fix to automatically add the import")
-        return 1
-    if fixed:
-        print(f"Fixed {len(fixed)} file(s)")
-        return 0
-    print("All files compliant ✓")
-    return 0
+    return _print_summary(violations, fixed)
 
 
 if __name__ == "__main__":

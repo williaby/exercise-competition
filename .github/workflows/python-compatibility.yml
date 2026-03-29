@@ -29,13 +29,14 @@ concurrency:
   group: python-compat-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   test:
     name: Python ${{ matrix.python-version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -77,6 +78,8 @@ jobs:
     name: Compatibility Summary
     needs: test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     if: always()
     steps:
       - name: Check results

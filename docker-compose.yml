@@ -8,6 +8,7 @@ services:
       dockerfile: Dockerfile
     image: exercise_competition:${VERSION:-latest}
     container_name: exercise_competition-app
+    env_file: .env
     ports:
       - "${APP_PORT:-8000}:8000"
     environment:

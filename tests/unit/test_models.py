@@ -49,10 +49,9 @@ class TestParticipant:
         db_session.commit()
 
         result = db_session.query(Participant).first()
-        assert result is not None
         assert result.name == "Test User"
-        assert result.id is not None
-        assert result.created_at is not None
+        assert isinstance(result.id, int)
+        assert result.created_at is not None  # auto-generated timestamp
 
     def test_participant_name_unique(self, db_session):
         db_session.add(Participant(name="Byron Williams"))
@@ -74,7 +73,7 @@ class TestParticipant:
         participant = (
             seeded_session.query(Participant).filter_by(name="Byron Williams").first()
         )
-        assert participant is not None
+        assert participant.name == "Byron Williams"
         assert participant.submissions == []
 
 
@@ -94,7 +93,6 @@ class TestWeeklySubmission:
         seeded_session.commit()
 
         result = seeded_session.query(WeeklySubmission).first()
-        assert result is not None
         assert result.week_number == 1
         assert result.monday is True
         assert result.tuesday is False
@@ -145,41 +143,25 @@ class TestWeeklySubmission:
 
         assert sub.days_exercised == 0
 
-    def test_is_compliant_true(self, seeded_session):
+    @pytest.mark.parametrize(
+        ("days_kwargs", "expected"),
+        [
+            pytest.param({"monday": True, "tuesday": True}, True, id="two-days-compliant"),
+            pytest.param({"monday": True}, False, id="one-day-not-compliant"),
+            pytest.param({}, False, id="zero-days-not-compliant"),
+        ],
+    )
+    def test_is_compliant(self, seeded_session, days_kwargs, expected):
         participant = seeded_session.query(Participant).first()
         sub = WeeklySubmission(
             participant_id=participant.id,
             week_number=1,
-            monday=True,
-            tuesday=True,
+            **days_kwargs,
         )
         seeded_session.add(sub)
         seeded_session.commit()
 
-        assert sub.is_compliant is True
-
-    def test_is_compliant_false_one_day(self, seeded_session):
-        participant = seeded_session.query(Participant).first()
-        sub = WeeklySubmission(
-            participant_id=participant.id,
-            week_number=1,
-            monday=True,
-        )
-        seeded_session.add(sub)
-        seeded_session.commit()
-
-        assert sub.is_compliant is False
-
-    def test_is_compliant_false_zero_days(self, seeded_session):
-        participant = seeded_session.query(Participant).first()
-        sub = WeeklySubmission(
-            participant_id=participant.id,
-            week_number=1,
-        )
-        seeded_session.add(sub)
-        seeded_session.commit()
-
-        assert sub.is_compliant is False
+        assert sub.is_compliant is expected
 
     def test_unique_constraint_participant_week(self, seeded_session):
         participant = seeded_session.query(Participant).first()
