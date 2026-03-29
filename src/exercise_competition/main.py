@@ -80,13 +80,14 @@ add_security_middleware(
 )
 app.add_middleware(CorrelationMiddleware)
 
+# Static files — mount before routers so /static/ is resolved first.
+# No conditional: fail loudly at startup if the directory is missing.
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
 # Routers
 app.include_router(health_router)
 app.include_router(app_router)
 app.include_router(strava_router)
 
-# Static files and templates
-if STATIC_DIR.exists():
-    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
-
+# Templates
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))

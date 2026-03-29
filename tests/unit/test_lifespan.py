@@ -2,7 +2,7 @@
 
 Covers:
 - main.py L32-37: lifespan startup/shutdown (setup_logging, init_db, log messages)
-- main.py L55: static files mount when STATIC_DIR exists
+- main.py: static files mount at /static
 """
 
 from __future__ import annotations
@@ -71,9 +71,8 @@ class TestStaticFiles:
     """Tests for static file mounting."""
 
     def test_static_route_exists(self) -> None:
-        """When STATIC_DIR exists, /static should be mounted."""
-        from exercise_competition.main import STATIC_DIR, app
+        """/static should always be mounted."""
+        from exercise_competition.main import app
 
-        if STATIC_DIR.exists():
-            route_paths = [r.path for r in app.routes if hasattr(r, "path")]
-            assert "/static" in route_paths
+        route_paths = [r.path for r in app.routes if hasattr(r, "path")]
+        assert "/static" in route_paths
