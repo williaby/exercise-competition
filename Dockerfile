@@ -4,14 +4,14 @@
 # =============================================================================
 # Stage 1: Builder - Install dependencies
 # =============================================================================
-FROM python:3.12.8-slim AS builder
+FROM python:3.12.13-slim AS builder
 
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential=12.9 \
-    curl=7.88.1-10+deb12u14 \
-    git=1:2.39.5-0+deb12u3 \
+    build-essential \
+    curl \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
@@ -27,7 +27,7 @@ RUN uv sync --frozen --no-dev
 # =============================================================================
 # Stage 2: Runtime - Minimal production image
 # =============================================================================
-FROM python:3.12.8-slim
+FROM python:3.12.13-slim
 
 LABEL org.opencontainers.image.title="Exercise Competition"
 LABEL org.opencontainers.image.description="Weekly exercise competition tracker with leaderboard"
@@ -39,8 +39,8 @@ LABEL org.opencontainers.image.licenses="MIT"
 
 # Install curl for healthcheck, create non-root user, then clean up
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates=20230311+deb12u1 \
-    curl=7.88.1-10+deb12u14 \
+    ca-certificates \
+    curl \
     && rm -rf /var/lib/apt/lists/* \
     && groupadd -r appuser && useradd -r -g appuser -u 1000 appuser
 
