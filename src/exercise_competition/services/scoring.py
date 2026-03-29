@@ -1,7 +1,7 @@
 """Competition scoring, compliance, and standings logic.
 
 Encodes the competition rules:
-- Configurable week count (default 20) starting Monday 2026-03-30
+- Configurable week count (default 20) starting Monday 2026-03-23
 - Compliance: configurable threshold (default 2+) exercise days per week = 1 point
 - Tiebreaker: average exercise days per submitted week
 - Streak: consecutive compliant weeks counting backward from most recent
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
     from exercise_competition.models import WeeklySubmission
 
-COMPETITION_START = datetime.date(2026, 3, 30)
+COMPETITION_START = datetime.date(2026, 3, 23)
 COMPETITION_TZ = ZoneInfo("America/Chicago")
 
 DAY_FIELDS = (

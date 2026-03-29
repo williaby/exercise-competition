@@ -12,7 +12,7 @@ This project was generated from [cookiecutter-python-template](https://github.co
 ## Project Context
 
 **What**: Weekly exercise competition tracker for 4 brothers (Byron, Justin, Nick, Bruce Williams).
-20-week competition starting 2026-03-30. Participants check which days they exercised 30+ minutes;
+20-week competition starting 2026-03-23. Participants check which days they exercised 30+ minutes;
 2+ days/week = 1 point. Tiebreaker: average exercise days/week.
 
 **Architecture**: FastAPI + SQLite + server-rendered Jinja2 templates. No app-level auth — Cloudflare

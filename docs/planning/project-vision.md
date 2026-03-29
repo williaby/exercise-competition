@@ -71,7 +71,7 @@ A dead-simple web form and leaderboard that makes the weekly competition visible
 
 ### Business
 
-- **Timeline**: Competition starts week of 2026-03-30 (Monday); app should be usable by Week 1
+- **Timeline**: Competition starts week of 2026-03-23 (Monday); app should be usable by Week 1
 - **Resources**: Solo developer (Byron), minimal ongoing maintenance
 - **Budget**: Existing Vultr instance + existing Cloudflare account
 

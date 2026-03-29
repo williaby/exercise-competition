@@ -133,7 +133,7 @@ PARTICIPANTS = [
 
 ### Competition Rules (Encoded in Service Layer)
 
-- **Competition period**: Week 1 starts Monday 2026-03-30, ends Sunday 2026-08-16 (20 weeks)
+- **Competition period**: Week 1 starts Monday 2026-03-23, ends Sunday 2026-08-09 (20 weeks)
 - **Week boundaries**: Monday 00:00 through Sunday 23:59
 - **Weekly compliance**: 2+ days checked as exercised (each day = 30+ min, honor system)
 - **Scoring**: 1 point per compliant week

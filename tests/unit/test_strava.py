@@ -563,24 +563,24 @@ class TestDateHelpers:
     def test_competition_week_first_day(self):
         from exercise_competition.services.strava import _date_to_competition_week
 
-        # Competition starts 2026-03-30
-        assert _date_to_competition_week(datetime.date(2026, 3, 30)) == 1
+        # Competition starts 2026-03-23
+        assert _date_to_competition_week(datetime.date(2026, 3, 23)) == 1
 
     def test_competition_week_second_week(self):
         from exercise_competition.services.strava import _date_to_competition_week
 
-        assert _date_to_competition_week(datetime.date(2026, 4, 6)) == 2
+        assert _date_to_competition_week(datetime.date(2026, 3, 30)) == 2
 
     def test_competition_week_before_start(self):
         from exercise_competition.services.strava import _date_to_competition_week
 
-        assert _date_to_competition_week(datetime.date(2026, 3, 29)) is None
+        assert _date_to_competition_week(datetime.date(2026, 3, 22)) is None
 
     def test_competition_week_after_end(self):
         from exercise_competition.services.strava import _date_to_competition_week
 
-        # 20 weeks from 2026-03-30 = 2026-08-17, so 2026-08-18 is week 21
-        assert _date_to_competition_week(datetime.date(2026, 8, 18)) is None
+        # 20 weeks from 2026-03-23 = 2026-08-10, so 2026-08-11 is week 21
+        assert _date_to_competition_week(datetime.date(2026, 8, 11)) is None
 
 
 class TestUpdateWeeklySubmission:
