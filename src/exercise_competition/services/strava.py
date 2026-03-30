@@ -7,7 +7,7 @@ auto-population of weekly exercise submissions from Strava data.
 from __future__ import annotations
 
 import datetime
-from typing import Any
+from typing import TYPE_CHECKING, TypedDict, cast
 from urllib.parse import urlencode
 
 import httpx
@@ -26,6 +26,9 @@ from exercise_competition.services.scoring import (
     COMPETITION_TZ,
 )
 from exercise_competition.utils.logging import get_logger
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import Session
 
 logger = get_logger(__name__)
 
@@ -46,6 +49,51 @@ _WEEKDAY_TO_FIELD = {
 }
 
 _SECONDS_PER_MINUTE = 60
+
+
+class _StravaAthlete(TypedDict):
+    """Strava athlete info from token exchange."""
+
+    id: int
+
+
+class _StravaTokenExchangeData(TypedDict):
+    """Strava OAuth token exchange response."""
+
+    access_token: str
+    refresh_token: str
+    expires_at: int
+    athlete: _StravaAthlete
+    scope: str
+
+
+class _StravaTokenRefreshData(TypedDict):
+    """Strava OAuth token refresh response."""
+
+    access_token: str
+    refresh_token: str
+    expires_at: int
+
+
+class _StravaActivityData(TypedDict):
+    """Strava activity from API response."""
+
+    id: int
+    type: str
+    name: str
+    start_date_local: str
+    moving_time: int
+    elapsed_time: int
+    distance: float | None
+
+
+class _ParticipantConnection(TypedDict):
+    """Participant Strava connection status."""
+
+    id: int
+    name: str
+    strava_connected: bool
+    strava_athlete_id: int | None
 
 
 def get_strava_auth_url(participant_id: int) -> str:
@@ -70,7 +118,7 @@ def get_strava_auth_url(participant_id: int) -> str:
     return f"{STRAVA_AUTH_URL}?{query}"
 
 
-def exchange_strava_code(code: str) -> dict[str, Any]:
+def exchange_strava_code(code: str) -> _StravaTokenExchangeData:
     """Exchange an OAuth authorization code for access/refresh tokens.
 
     Args:
@@ -91,7 +139,7 @@ def exchange_strava_code(code: str) -> dict[str, Any]:
             },
         )
         resp.raise_for_status()
-        return resp.json()
+        return cast("_StravaTokenExchangeData", resp.json())
 
 
 def refresh_strava_token(strava_token: StravaToken) -> StravaToken:
@@ -116,7 +164,7 @@ def refresh_strava_token(strava_token: StravaToken) -> StravaToken:
             },
         )
         resp.raise_for_status()
-        data = resp.json()
+        data = cast("_StravaTokenRefreshData", resp.json())
 
     with get_session() as session:
         token = session.get(StravaToken, strava_token.id)
@@ -178,7 +226,7 @@ def _get_valid_token(strava_token: StravaToken) -> StravaToken:
 
 def save_strava_token(
     participant_id: int,
-    token_data: dict[str, Any],
+    token_data: _StravaTokenExchangeData,
 ) -> StravaToken:
     """Save or update a Strava token for a participant.
 
@@ -254,7 +302,7 @@ def fetch_strava_activities(
     *,
     after: int | None = None,
     before: int | None = None,
-) -> list[dict[str, Any]]:
+) -> list[_StravaActivityData]:
     """Fetch activities from the Strava API.
 
     Args:
@@ -266,13 +314,13 @@ def fetch_strava_activities(
         List of activity dicts from the Strava API.
     """
     token = _get_valid_token(strava_token)
-    params: dict[str, Any] = {"per_page": 100}
+    params: dict[str, int] = {"per_page": 100}
     if after is not None:
         params["after"] = after
     if before is not None:
         params["before"] = before
 
-    all_activities: list[dict[str, Any]] = []
+    all_activities: list[_StravaActivityData] = []
     page = 1
 
     with httpx.Client(timeout=15.0) as client:
@@ -284,7 +332,7 @@ def fetch_strava_activities(
                 params=params,
             )
             resp.raise_for_status()
-            batch: list[dict[str, Any]] = resp.json()
+            batch = cast("list[_StravaActivityData]", resp.json())
             if not batch:
                 break
             all_activities.extend(batch)
@@ -446,7 +494,7 @@ def sync_participant_activities(participant_id: int) -> int:
 
 
 def _update_weekly_submission(
-    session: Any,
+    session: Session,
     participant_id: int,
     week_number: int,
     day_field: str,
@@ -501,7 +549,7 @@ def _update_weekly_submission(
         )
 
 
-def get_connected_participants() -> list[dict[str, Any]]:
+def get_connected_participants() -> list[_ParticipantConnection]:
     """Get all participants and their Strava connection status.
 
     Returns:
@@ -511,7 +559,7 @@ def get_connected_participants() -> list[dict[str, Any]]:
         participants = session.query(Participant).order_by(Participant.name).all()
         tokens = {t.participant_id: t for t in session.query(StravaToken).all()}
 
-        result = []
+        result: list[_ParticipantConnection] = []
         for p in participants:
             token = tokens.get(p.id)
             result.append(

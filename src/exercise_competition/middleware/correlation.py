@@ -54,7 +54,7 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 if TYPE_CHECKING:
     from fastapi import Request
     from starlette.responses import Response
-    from structlog.types import EventDict, WrappedLogger
+    from structlog.types import EventDict
 
 # Context variables for request correlation (async-safe)
 _correlation_id_ctx: ContextVar[str | None] = ContextVar("correlation_id", default=None)
@@ -131,7 +131,7 @@ def generate_correlation_id() -> str:
 
 
 def correlation_context_processor(
-    _logger: WrappedLogger,
+    _logger: object,
     _method_name: str,
     event_dict: EventDict,
 ) -> EventDict:

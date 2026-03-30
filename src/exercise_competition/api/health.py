@@ -89,7 +89,9 @@ def check_database() -> ReadinessCheck:
         from exercise_competition.core.database import get_session
 
         with get_session() as session:
-            session.execute(text("SELECT 1"))  # NOSONAR(S2077) hardcoded health check query, no user input
+            session.execute(
+                text("SELECT 1")
+            )  # NOSONAR(S2077) hardcoded health check query, no user input
 
         latency_ms = (time.time() - start) * 1000
         return ReadinessCheck(  # type: ignore[reportCallIssue]

@@ -59,6 +59,36 @@
     {% endfor %}
 </div>
 
+{% if strava_stats %}
+<h2 class="section-heading">Strava Leaderboard</h2>
+<p class="section-subtitle">Total time and miles logged via Strava</p>
+<div class="strava-stats-grid">
+    {% for stat in strava_stats %}
+    <div class="strava-stat-card rank-{{ loop.index }}">
+        <div class="standing-rank">
+            {% if loop.index == 1 and stat.activity_count > 0 %}&#127947;{% else %}{{ loop.index }}{% endif %}
+        </div>
+        <div class="standing-info">
+            <div class="standing-name">{{ stat.name }}</div>
+            <div class="standing-meta">
+                <span>{{ stat.activity_count }} activities</span>
+            </div>
+        </div>
+        <div class="standing-stats">
+            <div class="stat-block">
+                <span class="stat-value strava-hours">{{ stat.total_duration_hours }}</span>
+                <span class="stat-label">Hours</span>
+            </div>
+            <div class="stat-block">
+                <span class="stat-value strava-miles">{{ stat.total_distance_rounded }}</span>
+                <span class="stat-label">Miles</span>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
 <h2 class="section-heading">&#128197; Week Results</h2>
 <div class="week-timeline">
     {% for week in range(1, total_weeks + 1) %}

@@ -99,7 +99,9 @@ def strava_connect(participant_id: int) -> RedirectResponse:
             )
 
     auth_url = get_strava_auth_url(participant_id)
-    return RedirectResponse(url=auth_url, status_code=302)  # NOSONAR(S5146) redirect to Strava OAuth, URL built from config not user input
+    return RedirectResponse(
+        url=auth_url, status_code=302
+    )  # NOSONAR(S5146) redirect to Strava OAuth, URL built from config not user input
 
 
 @router.get("/callback", response_class=RedirectResponse)
