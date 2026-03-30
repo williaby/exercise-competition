@@ -10,7 +10,7 @@ import hashlib
 import os
 import secrets
 import time
-from typing import TYPE_CHECKING, Annotated, Any, TypedDict
+from typing import TYPE_CHECKING, Annotated, TypedDict
 
 from fastapi import APIRouter, Form, Path, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -32,6 +32,8 @@ from exercise_competition.services.scoring import (
 from exercise_competition.utils.logging import get_logger
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+
     from starlette.templating import Jinja2Templates
 
 logger = get_logger(__name__)
@@ -100,7 +102,7 @@ class WeekViewContext(TypedDict):
 # ---------------------------------------------------------------------------
 
 
-def _ctx(typed_dict: Any) -> dict[str, Any]:
+def _ctx(typed_dict: Mapping[str, object]) -> dict[str, object]:
     """Cast a TypedDict to a plain dict for Jinja2 TemplateResponse compatibility."""
     return dict(typed_dict)
 
@@ -347,7 +349,9 @@ def leaderboard(
             .join(Participant, StravaActivity.participant_id == Participant.id)
             .all()
         )
-    strava_stats = calculate_strava_stats(activity_rows)
+    strava_stats = calculate_strava_stats(
+        [(r[0], r[1], r[2], r[3]) for r in activity_rows]
+    )
 
     current_week = get_current_week()
     success_msg = "Submission recorded!" if msg == "success" else None

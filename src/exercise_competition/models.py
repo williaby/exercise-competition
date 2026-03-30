@@ -73,7 +73,7 @@ class WeeklySubmission(Base):
     """
 
     __tablename__ = "weekly_submissions"
-    __table_args__ = (
+    __table_args__ = (  # pyright: ignore[reportAny]
         UniqueConstraint("participant_id", "week_number", name="uq_participant_week"),
         CheckConstraint("week_number >= 1 AND week_number <= 20", name="ck_week_range"),
     )
@@ -147,7 +147,7 @@ class StravaToken(Base):
     """
 
     __tablename__ = "strava_tokens"
-    __table_args__ = (
+    __table_args__ = (  # pyright: ignore[reportAny]
         UniqueConstraint("participant_id", name="uq_strava_participant"),
         UniqueConstraint("strava_athlete_id", name="uq_strava_athlete"),
     )
@@ -205,7 +205,7 @@ class StravaActivity(Base):
     """
 
     __tablename__ = "strava_activities"
-    __table_args__ = (
+    __table_args__ = (  # pyright: ignore[reportAny]
         UniqueConstraint("strava_activity_id", name="uq_strava_activity_id"),
     )
 

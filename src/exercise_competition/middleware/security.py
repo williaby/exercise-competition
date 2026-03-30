@@ -31,7 +31,10 @@ from starlette.middleware.httpsredirect import HTTPSRedirectMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 from starlette.responses import JSONResponse, Response
 
-logger = structlog.get_logger(__name__)
+if TYPE_CHECKING:
+    from structlog.stdlib import BoundLogger
+
+logger: BoundLogger = structlog.get_logger(__name__)  # pyright: ignore[reportAny, reportAssignmentType]
 
 if TYPE_CHECKING:
     from fastapi import FastAPI, Request
@@ -160,7 +163,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         self._last_cleanup = current_time
 
         # Remove expired entries from all IPs
-        stale_ips = []
+        stale_ips: list[str] = []
         for ip, timestamps in self.requests.items():
             # Filter to only recent timestamps
             recent = [t for t in timestamps if current_time - t < 60]
@@ -220,8 +223,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         if request.client is None:
             logger.warning(
-                "request.client is None - cannot determine client IP for rate limiting. "
-                "Using 'unknown' as fallback."
+                "request_client_missing_ip",
             )
             return "unknown"
 
@@ -453,7 +455,7 @@ class SSRFPreventionMiddleware(BaseHTTPMiddleware):
         """
         # Check query parameters for URLs
         for param, value in request.query_params.items():
-            if isinstance(value, str) and ("://" in value or value.startswith("//")):
+            if "://" in value or value.startswith("//"):
                 if self._is_blocked_url(value):
                     return JSONResponse(
                         status_code=400,

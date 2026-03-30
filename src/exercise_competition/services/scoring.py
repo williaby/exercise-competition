@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import datetime
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 from zoneinfo import ZoneInfo
 
 if TYPE_CHECKING:
@@ -245,6 +245,16 @@ def calculate_standings(
 _METERS_PER_MILE = 1609.344
 
 
+@dataclass
+class _ActivityAccumulator:
+    """Mutable accumulator for per-participant Strava stats."""
+
+    name: str
+    duration: float = 0.0
+    distance: float = 0.0
+    count: int = 0
+
+
 def calculate_strava_stats(
     activities: Sequence[tuple[int, str, int, float | None]],
 ) -> list[StravaStats]:
@@ -257,28 +267,24 @@ def calculate_strava_stats(
     Returns:
         List of StravaStats sorted by total duration descending.
     """
-    totals: dict[int, dict[str, Any]] = {}
+    totals: dict[int, _ActivityAccumulator] = {}
     for pid, name, moving_time, distance in activities:
         if pid not in totals:
-            totals[pid] = {
-                "name": name,
-                "duration": 0.0,
-                "distance": 0.0,
-                "count": 0,
-            }
-        totals[pid]["duration"] += moving_time / 60.0
-        totals[pid]["distance"] += (distance or 0.0) / _METERS_PER_MILE
-        totals[pid]["count"] += 1
+            totals[pid] = _ActivityAccumulator(name=name)
+        acc = totals[pid]
+        acc.duration += moving_time / 60.0
+        acc.distance += (distance or 0.0) / _METERS_PER_MILE
+        acc.count += 1
 
     stats = [
         StravaStats(
             participant_id=pid,
-            name=data["name"],
-            total_duration_minutes=round(data["duration"], 1),
-            total_distance_miles=data["distance"],
-            activity_count=data["count"],
+            name=acc.name,
+            total_duration_minutes=round(acc.duration, 1),
+            total_distance_miles=acc.distance,
+            activity_count=acc.count,
         )
-        for pid, data in totals.items()
+        for pid, acc in totals.items()
     ]
     stats.sort(key=lambda s: s.total_duration_minutes, reverse=True)
     return stats

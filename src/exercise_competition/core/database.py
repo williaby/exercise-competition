@@ -7,7 +7,7 @@ FastAPI runs sync endpoints in a threadpool automatically.
 from __future__ import annotations
 
 from contextlib import contextmanager
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from sqlalchemy import Engine, create_engine, event, text
 from sqlalchemy.orm import Session, sessionmaker
@@ -16,6 +16,7 @@ from exercise_competition.core.config import settings
 from exercise_competition.models import Base, Participant
 
 if TYPE_CHECKING:
+    import sqlite3
     from collections.abc import Generator
 
     from sqlalchemy.pool import ConnectionPoolEntry
@@ -36,9 +37,10 @@ def _set_sqlite_wal(
     _connection_record: ConnectionPoolEntry,
 ) -> None:
     """Enable WAL mode and busy timeout on every new SQLite connection."""
-    cursor = dbapi_connection.cursor()  # type: ignore[union-attr]
-    cursor.execute("PRAGMA journal_mode=WAL")  # NOSONAR(S2077) hardcoded SQLite PRAGMA, no user input
-    cursor.execute("PRAGMA busy_timeout=5000")  # NOSONAR(S2077) hardcoded SQLite PRAGMA, no user input
+    conn = cast("sqlite3.Connection", dbapi_connection)
+    cursor = conn.cursor()
+    cursor.execute("PRAGMA journal_mode=WAL")  # NOSONAR(S2077)
+    cursor.execute("PRAGMA busy_timeout=5000")  # NOSONAR(S2077)
     cursor.close()
 
 
@@ -99,7 +101,9 @@ def init_db() -> None:
     Base.metadata.create_all(engine)
 
     with get_session() as session:
-        existing = session.execute(text("SELECT COUNT(*) FROM participants")).scalar()  # NOSONAR(S2077) hardcoded seed check, no user input
+        existing = session.execute(
+            text("SELECT COUNT(*) FROM participants")
+        ).scalar()  # NOSONAR(S2077) hardcoded seed check, no user input
         if existing == 0:
             for name in SEED_PARTICIPANTS:
                 session.add(Participant(name=name))

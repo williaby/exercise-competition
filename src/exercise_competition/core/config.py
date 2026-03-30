@@ -64,7 +64,9 @@ class Settings(BaseSettings):
     strava_client_id: str = ""
     strava_client_secret: str = ""  # NOSONAR(S2068) loaded from env vars, empty default
     strava_redirect_uri: str = ""
-    strava_webhook_verify_token: str = ""  # NOSONAR(S2068) loaded from env vars, empty default
+    strava_webhook_verify_token: str = (
+        ""  # NOSONAR(S2068) loaded from env vars, empty default
+    )
     strava_min_activity_minutes: Annotated[int, Field(ge=1, le=1440)] = 30
 
 
