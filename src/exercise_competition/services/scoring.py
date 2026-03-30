@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import datetime
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from zoneinfo import ZoneInfo
 
 if TYPE_CHECKING:
@@ -68,6 +68,35 @@ class Standing:
     avg_days: float
     streak: int
     weeks_submitted: int
+
+
+@dataclass(frozen=True)
+class StravaStats:
+    """Aggregated Strava activity stats for a participant.
+
+    Attributes:
+        participant_id: Database ID of the participant.
+        name: Participant display name.
+        total_duration_minutes: Total moving time across all activities.
+        total_distance_miles: Total distance across all activities.
+        activity_count: Number of Strava activities synced.
+    """
+
+    participant_id: int
+    name: str
+    total_duration_minutes: float
+    total_distance_miles: float
+    activity_count: int
+
+    @property
+    def total_duration_hours(self) -> float:
+        """Total duration formatted as hours."""
+        return round(self.total_duration_minutes / 60, 1)
+
+    @property
+    def total_distance_rounded(self) -> float:
+        """Total distance rounded to 1 decimal."""
+        return round(self.total_distance_miles, 1)
 
 
 def get_week_date_range(week: int) -> tuple[datetime.date, datetime.date]:
@@ -211,3 +240,45 @@ def calculate_standings(
 
     standings.sort(key=lambda s: (s.points, s.avg_days), reverse=True)
     return standings
+
+
+_METERS_PER_MILE = 1609.344
+
+
+def calculate_strava_stats(
+    activities: Sequence[tuple[int, str, int, float | None]],
+) -> list[StravaStats]:
+    """Aggregate Strava activity stats per participant.
+
+    Args:
+        activities: Sequence of (participant_id, name, moving_time_seconds,
+            distance_meters) tuples from a joined query.
+
+    Returns:
+        List of StravaStats sorted by total duration descending.
+    """
+    totals: dict[int, dict[str, Any]] = {}
+    for pid, name, moving_time, distance in activities:
+        if pid not in totals:
+            totals[pid] = {
+                "name": name,
+                "duration": 0.0,
+                "distance": 0.0,
+                "count": 0,
+            }
+        totals[pid]["duration"] += moving_time / 60.0
+        totals[pid]["distance"] += (distance or 0.0) / _METERS_PER_MILE
+        totals[pid]["count"] += 1
+
+    stats = [
+        StravaStats(
+            participant_id=pid,
+            name=data["name"],
+            total_duration_minutes=round(data["duration"], 1),
+            total_distance_miles=data["distance"],
+            activity_count=data["count"],
+        )
+        for pid, data in totals.items()
+    ]
+    stats.sort(key=lambda s: s.total_duration_minutes, reverse=True)
+    return stats

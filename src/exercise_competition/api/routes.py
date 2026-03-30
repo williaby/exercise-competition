@@ -18,12 +18,14 @@ from sqlalchemy.exc import IntegrityError
 
 from exercise_competition.core.config import settings
 from exercise_competition.core.database import get_session
-from exercise_competition.models import Participant, WeeklySubmission
+from exercise_competition.models import Participant, StravaActivity, WeeklySubmission
 from exercise_competition.services.cache import standings_cache
 from exercise_competition.services.jokes import get_random_joke
 from exercise_competition.services.scoring import (
     Standing,
+    StravaStats,
     calculate_standings,
+    calculate_strava_stats,
     get_current_week,
     get_week_label,
 )
@@ -63,6 +65,7 @@ class LeaderboardContext(TypedDict):
     """Template context for the leaderboard page."""
 
     standings: list[Standing]
+    strava_stats: list[StravaStats]
     current_week: int | None
     total_weeks: int
     success: str | None
@@ -332,11 +335,26 @@ def leaderboard(
             standings = calculate_standings(submissions, participant_tuples)
         standings_cache.set(standings)
 
+    # Aggregate Strava activity stats (distance + duration)
+    with get_session() as session:
+        activity_rows = (
+            session.query(
+                StravaActivity.participant_id,
+                Participant.name,
+                StravaActivity.moving_time_seconds,
+                StravaActivity.distance_meters,
+            )
+            .join(Participant, StravaActivity.participant_id == Participant.id)
+            .all()
+        )
+    strava_stats = calculate_strava_stats(activity_rows)
+
     current_week = get_current_week()
     success_msg = "Submission recorded!" if msg == "success" else None
 
     context = LeaderboardContext(
         standings=standings,
+        strava_stats=strava_stats,
         current_week=current_week,
         total_weeks=settings.week_max,
         success=success_msg,

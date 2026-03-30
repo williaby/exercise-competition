@@ -793,6 +793,52 @@ tbody tr:hover {
 
 
 /* ============================================================
+   Strava Stats Leaderboard
+   ============================================================ */
+.section-subtitle {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin: -0.5rem 0 1rem 0;
+}
+
+.strava-stats-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+}
+
+.strava-stat-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.2s var(--ease), border-color 0.2s var(--ease);
+}
+
+.strava-stat-card:hover {
+    box-shadow: var(--shadow-md);
+    border-color: #fc4c02;
+}
+
+.strava-stat-card.rank-1 {
+    border-left: 3px solid #fc4c02;
+    background: linear-gradient(135deg, #fff7ed, var(--surface));
+}
+
+.strava-hours {
+    color: #fc4c02;
+}
+
+.strava-miles {
+    color: var(--electric-blue);
+}
+
+/* ============================================================
    Strava Integration
    ============================================================ */
 .strava-info-card {
