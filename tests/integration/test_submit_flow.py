@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+from unittest.mock import MagicMock, patch
+
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy.exc import IntegrityError
 
 
 @pytest.fixture(autouse=True)
@@ -85,11 +88,11 @@ class TestSubmitForm:
         assert leaderboard.status_code == 200
         assert "Byron Williams" in leaderboard.text
 
-    def test_duplicate_submission_shows_error(self, client):
+    def test_resubmission_updates_existing_record(self, client):
         form_response = client.get("/submit")
         csrf_token = _extract_csrf_token(form_response.text)
 
-        # First submission
+        # First submission — Monday only (non-compliant, 1 day)
         client.post(
             "/submit",
             data={
@@ -101,7 +104,13 @@ class TestSubmitForm:
             follow_redirects=False,
         )
 
-        # Second submission (duplicate)
+        # Confirm week view shows only 1 day before resubmission
+        week_before = client.get("/week/1")
+        assert week_before.status_code == 200
+        # Template renders days_exercised as <strong>N</strong>
+        assert "<strong>1</strong>" in week_before.text
+
+        # Second submission later in the week — adds Tuesday (now compliant, 2 days)
         form2 = client.get("/submit")
         csrf2 = _extract_csrf_token(form2.text)
         response = client.post(
@@ -110,11 +119,92 @@ class TestSubmitForm:
                 "csrf_token": csrf2,
                 "participant_name": "Byron Williams",
                 "week_number": "1",
+                "monday": "true",
                 "tuesday": "true",
             },
+            follow_redirects=False,
+        )
+        assert response.status_code == 303
+        assert "updated" in response.headers["location"]
+
+        # Confirm week view now reflects both days
+        week_after = client.get("/week/1")
+        assert week_after.status_code == 200
+        assert "<strong>2</strong>" in week_after.text
+
+    def test_resubmission_shows_updated_message_on_leaderboard(self, client):
+        form_response = client.get("/submit")
+        csrf_token = _extract_csrf_token(form_response.text)
+
+        client.post(
+            "/submit",
+            data={
+                "csrf_token": csrf_token,
+                "participant_name": "Byron Williams",
+                "week_number": "1",
+                "monday": "true",
+            },
+            follow_redirects=False,
+        )
+
+        form2 = client.get("/submit")
+        csrf2 = _extract_csrf_token(form2.text)
+        # Follow redirects so we land on the leaderboard with ?msg=updated
+        response = client.post(
+            "/submit",
+            data={
+                "csrf_token": csrf2,
+                "participant_name": "Byron Williams",
+                "week_number": "1",
+                "monday": "true",
+                "tuesday": "true",
+            },
+            follow_redirects=True,
         )
         assert response.status_code == 200
-        assert "already submitted" in response.text
+        assert "Submission updated" in response.text
+
+    def test_resubmission_can_remove_days(self, client):
+        """Resubmitting with fewer days overwrites — regression guard against partial updates."""
+        form1 = client.get("/submit")
+        csrf1 = _extract_csrf_token(form1.text)
+
+        # First submission: 3 days (compliant)
+        client.post(
+            "/submit",
+            data={
+                "csrf_token": csrf1,
+                "participant_name": "Byron Williams",
+                "week_number": "1",
+                "monday": "true",
+                "tuesday": "true",
+                "wednesday": "true",
+            },
+            follow_redirects=False,
+        )
+
+        week_before = client.get("/week/1")
+        assert week_before.status_code == 200
+        assert "<strong>3</strong>" in week_before.text
+
+        # Resubmit with only 1 day
+        form2 = client.get("/submit")
+        csrf2 = _extract_csrf_token(form2.text)
+        client.post(
+            "/submit",
+            data={
+                "csrf_token": csrf2,
+                "participant_name": "Byron Williams",
+                "week_number": "1",
+                "monday": "true",
+            },
+            follow_redirects=False,
+        )
+
+        week_after = client.get("/week/1")
+        assert week_after.status_code == 200
+        # 1 day now — days were replaced, not merged
+        assert "<strong>1</strong>" in week_after.text
 
     def test_invalid_csrf_shows_error(self, client):
         response = client.post(
@@ -142,6 +232,46 @@ class TestSubmitForm:
         )
         assert response.status_code == 200
         assert "Unknown participant" in response.text
+
+
+class TestSubmitErrors:
+    """Tests for unexpected server-side errors during submission."""
+
+    def test_unexpected_integrity_error_shows_generic_error(self, client):
+        """IntegrityError that is not the unique-constraint race is shown as a generic error."""
+        form_response = client.get("/submit")
+        csrf_token = _extract_csrf_token(form_response.text)
+
+        mock_session = MagicMock()
+        # No existing submission found (triggers INSERT path)
+        mock_session.query.return_value.filter.return_value.first.return_value = None
+        mock_session.commit.side_effect = IntegrityError(
+            "some other constraint", params=None, orig=Exception("db error")
+        )
+
+        with (
+            patch(
+                "exercise_competition.api.routes._validate_participant_name",
+                return_value=1,
+            ),
+            patch(
+                "exercise_competition.api.routes.get_session"
+            ) as mock_get_session,
+        ):
+            mock_get_session.return_value.__enter__.return_value = mock_session
+
+            response = client.post(
+                "/submit",
+                data={
+                    "csrf_token": csrf_token,
+                    "participant_name": "Byron Williams",
+                    "week_number": "1",
+                    "monday": "true",
+                },
+            )
+
+        assert response.status_code == 200
+        assert "unexpected error" in response.text.lower()
 
 
 class TestLeaderboard:

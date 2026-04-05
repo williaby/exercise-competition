@@ -263,45 +263,54 @@ def submit_exercise(
         return templates.TemplateResponse(request, _SUBMIT_TEMPLATE, _ctx(context))
 
     with get_session() as session:
-        submission = WeeklySubmission(
-            participant_id=participant_id,
-            week_number=week_number,
-            monday=monday,
-            tuesday=tuesday,
-            wednesday=wednesday,
-            thursday=thursday,
-            friday=friday,
-            saturday=saturday,
-            sunday=sunday,
+        existing = (
+            session.query(WeeklySubmission)
+            .filter(
+                WeeklySubmission.participant_id == participant_id,
+                WeeklySubmission.week_number == week_number,
+            )
+            .first()
         )
-        session.add(submission)
+
+        if existing is not None:
+            existing.monday = monday
+            existing.tuesday = tuesday
+            existing.wednesday = wednesday
+            existing.thursday = thursday
+            existing.friday = friday
+            existing.saturday = saturday
+            existing.sunday = sunday
+            submission = existing
+            is_update = True
+        else:
+            submission = WeeklySubmission(
+                participant_id=participant_id,
+                week_number=week_number,
+                monday=monday,
+                tuesday=tuesday,
+                wednesday=wednesday,
+                thursday=thursday,
+                friday=friday,
+                saturday=saturday,
+                sunday=sunday,
+            )
+            session.add(submission)
+            is_update = False
+
         try:
             session.commit()
         except IntegrityError as exc:
             session.rollback()
             error_detail = str(exc.orig) if exc.orig else str(exc)
-            if (
-                "uq_participant_week" in error_detail.lower()
-                or "unique" in error_detail.lower()
-            ):
-                logger.warning(
-                    "duplicate_submission_rejected",
-                    participant=participant_name,
-                    week_number=week_number,
-                )
-                context = _build_submit_context(
-                    error=f"{participant_name} has already submitted for week {week_number}.",
-                )
-            else:
-                logger.exception(
-                    "integrity_error_on_submission",
-                    participant=participant_name,
-                    week_number=week_number,
-                    error=error_detail,
-                )
-                context = _build_submit_context(
-                    error="An unexpected error occurred. Please try again.",
-                )
+            logger.exception(
+                "integrity_error_on_submission",
+                participant=participant_name,
+                week_number=week_number,
+                error=error_detail,
+            )
+            context = _build_submit_context(
+                error="An unexpected error occurred. Please try again.",
+            )
             return templates.TemplateResponse(request, _SUBMIT_TEMPLATE, _ctx(context))
 
         # Invalidate leaderboard cache after successful submission
@@ -314,9 +323,11 @@ def submit_exercise(
             week_number=week_number,
             days_exercised=submission.days_exercised,
             is_compliant=submission.is_compliant,
+            updated=is_update,
         )
 
-    return RedirectResponse(url="/leaderboard?msg=success", status_code=303)
+    redirect_msg = "updated" if is_update else "success"
+    return RedirectResponse(url=f"/leaderboard?msg={redirect_msg}", status_code=303)
 
 
 @router.get("/leaderboard", response_class=HTMLResponse)
@@ -354,7 +365,12 @@ def leaderboard(
     )
 
     current_week = get_current_week()
-    success_msg = "Submission recorded!" if msg == "success" else None
+    if msg == "success":
+        success_msg: str | None = "Submission recorded!"
+    elif msg == "updated":
+        success_msg = "Submission updated!"
+    else:
+        success_msg = None
 
     context = LeaderboardContext(
         standings=standings,
