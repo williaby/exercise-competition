@@ -71,6 +71,14 @@ jobs:
   changelog:
     name: Changelog Check
     runs-on: ubuntu-latest
+    # Skip via event payload to avoid GitHub API label-timing races on the
+    # opened event (e.g. Renovate PRs). Avoids out-of-step false positives
+    # when main advances after the PR was opened.
+    if: |
+      !contains(github.event.pull_request.labels.*.name, 'skip-changelog') &&
+      !contains(github.event.pull_request.labels.*.name, 'dependencies') &&
+      !contains(github.event.pull_request.labels.*.name, 'documentation') &&
+      !contains(github.event.pull_request.labels.*.name, 'automated')
     permissions:
       contents: read
     steps:
@@ -85,13 +93,17 @@ jobs:
           fetch-depth: 0
 
       - name: Check for CHANGELOG update
-        uses: dangoslen/changelog-enforcer@4243a92c71c0f1e6c88e7ae43d6f7c3146e8f8ee # v3.8.0
-        with:
-          changeLogPath: 'CHANGELOG.md'
-          skipLabels: 'skip-changelog,dependencies,documentation'
-          missingUpdateErrorMessage: |
-            Please update CHANGELOG.md with a description of your changes.
-            Add the label 'skip-changelog' if this PR does not require a changelog entry.
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          git fetch origin "$BASE_REF" --no-tags
+          MERGE_BASE=$(git merge-base HEAD "origin/$BASE_REF")
+          if git diff --name-only "$MERGE_BASE" HEAD | grep -q "^CHANGELOG.md$"; then
+            echo "CHANGELOG.md was updated - check passed."
+          else
+            echo "::error::CHANGELOG.md was not updated. Please add a changelog entry, or add the 'skip-changelog' label if no entry is needed."
+            exit 1
+          fi
 
 
   # Validation Summary
