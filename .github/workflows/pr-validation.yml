@@ -1,8 +1,11 @@
 # PR Validation for Exercise Competition
-# Comprehensive pull request validation using org-level workflow plus additional checks.
+# Comprehensive pull request validation with supplementary checks.
 #
-# This workflow calls the org-level PR validation workflow and adds supplementary
-# checks for dead code detection, changelog enforcement, and documentation links.
+# Calls supplementary checks for dead code detection and changelog enforcement.
+# Core code quality checks (linting, type checking, tests) are handled by ci.yml.
+#
+# Note: The org-level python-pr-validation.yml reusable workflow was removed.
+# Its quality check functionality is covered by ci.yml (python-ci.yml reusable).
 name: PR Validation
 
 on:
@@ -21,32 +24,6 @@ concurrency:
 permissions: {}
 
 jobs:
-  # ==========================================================================
-  # Org-Level PR Validation (Core Checks)
-  # ==========================================================================
-  core-validation:
-    name: Core Validation
-    permissions:
-      contents: read
-      pull-requests: write
-    uses: ByronWilliamsCPA/.github/.github/workflows/python-pr-validation.yml@main
-    with:
-      python-version: '3.12'
-      source-directory: 'src'
-      test-directory: 'tests'
-      require-tests: true
-      require-conventional-commits: true
-      require-description: true
-      min-description-length: 50
-      check-breaking-changes: true
-      add-size-labels: true
-      coverage-threshold: 80
-    secrets: inherit
-
-  # ==========================================================================
-  # Additional Checks (Template-Specific)
-  # ==========================================================================
-
   # Dead Code Detection with Vulture
   dead-code:
     name: Dead Code Check
@@ -87,7 +64,7 @@ jobs:
             echo '```' >> $GITHUB_STEP_SUMMARY
             echo "::warning::Potential dead code detected. Review vulture report."
           else
-            echo "✅ No dead code detected with 90% confidence." >> $GITHUB_STEP_SUMMARY
+            echo "No dead code detected with 90% confidence." >> $GITHUB_STEP_SUMMARY
           fi
 
   # Changelog Enforcement
@@ -114,19 +91,16 @@ jobs:
           skipLabels: 'skip-changelog,dependencies,documentation'
           missingUpdateErrorMessage: |
             Please update CHANGELOG.md with a description of your changes.
-            Add the label 'skip-changelog' if this PR doesn't require a changelog entry.
+            Add the label 'skip-changelog' if this PR does not require a changelog entry.
 
 
-
-  # ==========================================================================
   # Validation Summary
-  # ==========================================================================
   validation-summary:
     name: Validation Summary
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    needs: [core-validation, dead-code, changelog]
+    needs: [dead-code, changelog]
     if: always()
     steps:
       - name: Check validation results
@@ -134,31 +108,19 @@ jobs:
           echo "## PR Validation Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
-          if [ "${{ needs.core-validation.result }}" == "success" ]; then
-            echo "✅ Core Validation: Passed" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "❌ Core Validation: ${{ needs.core-validation.result }}" >> $GITHUB_STEP_SUMMARY
-          fi
-
           if [ "${{ needs.dead-code.result }}" == "success" ]; then
-            echo "✅ Dead Code Check: Passed" >> $GITHUB_STEP_SUMMARY
+            echo "Dead Code Check: Passed" >> $GITHUB_STEP_SUMMARY
           else
-            echo "⚠️ Dead Code Check: ${{ needs.dead-code.result }}" >> $GITHUB_STEP_SUMMARY
+            echo "Dead Code Check: ${{ needs.dead-code.result }}" >> $GITHUB_STEP_SUMMARY
           fi
 
           if [ "${{ needs.changelog.result }}" == "success" ]; then
-            echo "✅ Changelog: Updated" >> $GITHUB_STEP_SUMMARY
+            echo "Changelog: Updated" >> $GITHUB_STEP_SUMMARY
           elif [ "${{ needs.changelog.result }}" == "skipped" ]; then
-            echo "⏭️ Changelog: Skipped" >> $GITHUB_STEP_SUMMARY
+            echo "Changelog: Skipped" >> $GITHUB_STEP_SUMMARY
           else
-            echo "⚠️ Changelog: ${{ needs.changelog.result }}" >> $GITHUB_STEP_SUMMARY
-          fi
-          # Fail if core validation failed
-          if [ "${{ needs.core-validation.result }}" == "failure" ]; then
-            echo ""
-            echo "❌ Core validation checks failed. Please review and fix issues." >> $GITHUB_STEP_SUMMARY
-            exit 1
+            echo "Changelog: ${{ needs.changelog.result }}" >> $GITHUB_STEP_SUMMARY
           fi
 
           echo ""
-          echo "✅ All validation checks passed!" >> $GITHUB_STEP_SUMMARY
+          echo "PR validation checks complete." >> $GITHUB_STEP_SUMMARY
