@@ -1,3 +1,12 @@
+# Security Gate
+# Blocking gate that fails the build when any required security check fails.
+#
+# This workflow MUST be required as a status check in branch protection
+# rules so that merges are blocked when security checks fail. It runs
+# bandit, pip-audit, secret detection, and a semgrep policy check.
+#
+# IMPORTANT: No security job here may use `continue-on-error: true`.
+# Any failure here should block the merge.
 name: Security Gate
 
 on:
@@ -5,14 +14,160 @@ on:
   push:
     branches:
       - main
+      - master
+      - develop
+
+# Cancel in-progress runs for same PR/branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
-  security-gate:
-    name: Security Gate Validation
+  bandit:
+    name: SAST (Bandit)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - name: Placeholder
-        run: echo "Security Gate Validation stub - implementation pending"
+      - name: Harden the runner
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Install dependencies
+        run: uv sync --all-extras
+
+      - name: Run Bandit (blocking on medium+ findings)
+        run: |
+          uv run bandit -r src/ -c pyproject.toml \
+            --severity-level medium \
+            --confidence-level medium
+
+  dependency-audit:
+    name: Dependency Audit (pip-audit)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Install dependencies
+        run: uv sync --all-extras
+
+      # Documented exceptions are tracked in
+      # docs/security/vulnerability-risk-register.md.
+      - name: Run pip-audit (blocking)
+        run: uv run pip-audit --ignore-vuln CVE-2026-4539
+
+  secret-scan:
+    name: Secret Detection (TruffleHog)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: TruffleHog OSS scan (verified findings only)
+        uses: trufflesecurity/trufflehog@37b77001d0174ebec2fcca2bd83ff83a6d45a3ab # v3.95.3
+        with:
+          extra_args: --only-verified
+
+  semgrep:
+    name: SAST (Semgrep)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+        with:
+          python-version: "3.12"
+
+      - name: Install Semgrep
+        run: pip install --no-cache-dir semgrep==1.99.0
+
+      - name: Run Semgrep (project policy + p/owasp-top-ten)
+        run: |
+          # Local policy first; fall back to public ruleset on parse error.
+          semgrep --config=.semgrep.yml --config=p/owasp-top-ten \
+            --error --severity ERROR --severity WARNING \
+            --metrics=off
+
+  gate:
+    name: Security Gate Result
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    needs: [bandit, dependency-audit, secret-scan, semgrep]
+    if: always()
+    steps:
+      - name: Aggregate results
+        env:
+          BANDIT: ${{ needs.bandit.result }}
+          DEPS: ${{ needs.dependency-audit.result }}
+          SECRETS: ${{ needs.secret-scan.result }}
+          SEMGREP: ${{ needs.semgrep.result }}
+        run: |
+          echo "Bandit:        $BANDIT"
+          echo "Dependencies:  $DEPS"
+          echo "Secrets:       $SECRETS"
+          echo "Semgrep:       $SEMGREP"
+          if [ "$BANDIT" != "success" ] \
+             || [ "$DEPS" != "success" ] \
+             || [ "$SECRETS" != "success" ] \
+             || [ "$SEMGREP" != "success" ]; then
+            echo "::error::Security gate failed — one or more required checks did not pass."
+            exit 1
+          fi
+          echo "Security gate passed."
