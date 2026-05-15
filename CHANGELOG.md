@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Initial project setup and structure
+- `SECURITY-FINDINGS.md` documenting the security review of the Python
+  source and CI/CD workflows.
+- Real blocking Security Gate workflow (Bandit, pip-audit, TruffleHog,
+  Semgrep) replacing the previous placeholder.
+
+### Security
+- Pinned every `uses:` reference in `.github/workflows/` to a commit
+  SHA (no more floating `@v7` or `@main`).
+- Removed `continue-on-error: true` from the `pip-audit` step in
+  `security-analysis.yml` so dependency vulnerabilities now fail the
+  job.
+- Added `step-security/harden-runner` with `egress-policy: audit` and
+  `persist-credentials: false` on checkouts to all jobs that lacked
+  them.
+- Added explicit job-level `permissions:` blocks for least-privilege
+  on jobs that previously inherited only the top-level grant.
 
 ## [0.1.0] - TBD
 
