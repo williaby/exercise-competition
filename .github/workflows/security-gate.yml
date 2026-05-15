@@ -135,16 +135,18 @@ jobs:
           python-version: "3.12"
 
       - name: Install Semgrep
-        run: pip install --no-cache-dir semgrep==1.99.0
+        run: pip install --no-cache-dir semgrep==1.128.0
 
       - name: Run Semgrep (project policy + p/owasp-top-ten)
         run: |
           # Run the local policy and the public OWASP Top 10 ruleset
           # together. `--error` makes findings at ERROR/WARNING fail
-          # the job.
-          semgrep --config=.semgrep.yml --config=p/owasp-top-ten \
-            --error --severity ERROR --severity WARNING \
-            --metrics=off
+          # the job.  `--verbose` surfaces registry-fetch and parse
+          # diagnostics so a failure here is debuggable from the log.
+          semgrep scan \
+            --config=.semgrep.yml --config=p/owasp-top-ten \
+            --error --severity=ERROR --severity=WARNING \
+            --metrics=off --verbose
 
   gate:
     name: Security Gate Result
