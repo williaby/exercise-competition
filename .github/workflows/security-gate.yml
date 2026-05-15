@@ -139,7 +139,9 @@ jobs:
 
       - name: Run Semgrep (project policy + p/owasp-top-ten)
         run: |
-          # Local policy first; fall back to public ruleset on parse error.
+          # Run the local policy and the public OWASP Top 10 ruleset
+          # together. `--error` makes findings at ERROR/WARNING fail
+          # the job.
           semgrep --config=.semgrep.yml --config=p/owasp-top-ten \
             --error --severity ERROR --severity WARNING \
             --metrics=off

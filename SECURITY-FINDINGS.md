@@ -201,12 +201,28 @@ it via Settings → Rules → Rulesets after this PR merges.
 on the `pip-audit` step and downgraded any failure to a warning. The
 flag has been removed: `pip-audit` now runs without continuation and
 its non-zero exit fails the job, which in turn fails the workflow.
+The step `id` was renamed from `safety` to `pip-audit` and the report
+filename from `safety-report.json` to `pip-audit-report.json` to match
+the tool actually being run.
 
 The documented exception for `CVE-2026-4539` is preserved via
 `--ignore-vuln CVE-2026-4539`, mirroring `ci.yml`.
 
 A repository-wide grep confirms no remaining
 `continue-on-error: true` on any security workflow.
+
+### 2.4a Lockfile upgrade — APPLIED
+
+Removing `continue-on-error` exposed 22 pre-existing dependency
+vulnerabilities that had been silently downgraded to warnings. `uv lock
+--upgrade` was run to refresh the lockfile to current package versions;
+the post-upgrade `pip-audit --ignore-vuln CVE-2026-4539` reports
+**"No known vulnerabilities found"**. Notable bumps include
+`authlib` (1.6.9 → 1.6.11), `cryptography` (46.0.6 → 46.0.7),
+`urllib3` (2.6.3 → 2.7.0), `python-multipart` (0.0.22 → 0.0.28),
+`pydantic` (2.12.5 → 2.13.4), `uvicorn` (0.42.0 → 0.47.0), and the
+jupyter ecosystem (`jupyter-server`, `jupyterlab`, `nbconvert`,
+`notebook`, `mistune`).
 
 ### 2.5 `step-security/harden-runner` egress audit — ADDED
 
@@ -236,7 +252,30 @@ call, not in the caller.
 `.git/config`, which lets later steps push back to the repo. Where
 that is not needed I added `persist-credentials: false` to match the
 hardened checkouts already in `codeql.yml` and `scorecard.yml`. This
-was applied alongside the harden-runner additions in §2.5.
+was applied alongside the harden-runner additions in §2.5, and
+extended (per code review) to `pr-validation.yml` (both jobs),
+`slsa-provenance.yml` (build job), and `reuse.yml` (both jobs).
+
+### 2.7 Other workflow fixes folded into this PR
+
+- **`dangoslen/changelog-enforcer` pin was unreachable.** Main had
+  `dangoslen/changelog-enforcer@4243a92c71c0f1e6c88e7ae43d6f7c3146e8f8ee
+  # v3.8.0`, but no `v3.8.0` tag exists in that repo, so the runner
+  failed to resolve the action. Repinned to v3.7.0
+  (`8b5e9dc3121363bb7c0115f8533404d92af382de`).
+- **`.semgrep.yml` had an invalid placeholder rule** (an INFO rule
+  whose body was `pattern-inside: import $MODULE`). Replaced with an
+  explicit `rules: []` plus a comment pointing at the public
+  rulesets pulled by the Security Gate.
+- **Reusable workflow pins in `ByronWilliamsCPA/.github`** stay
+  pinned to the SHA chosen in this PR. The pinned `python-sbom.yml`
+  fails its `Install cyclonedx-bom` step in the current upstream HEAD;
+  rather than chase a green SHA in this PR, the failure is acknowledged
+  here so it can be addressed by updating the upstream reusable
+  workflow (then bumping the pin) as a follow-up. The other reusable
+  workflow jobs (`container-security`, `mutation-testing`,
+  `publish-pypi`, `coverage`, `slsa`) are not on the PR path and are
+  not impacted.
 
 ---
 

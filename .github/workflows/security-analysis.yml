@@ -69,9 +69,9 @@ jobs:
       # Security Gate can block merges. Documented exceptions go through
       # --ignore-vuln referenced in docs/security/vulnerability-risk-register.md.
       - name: Run dependency vulnerability scan (pip-audit)
-        id: safety
+        id: pip-audit
         run: |
-          uv run pip-audit --ignore-vuln CVE-2026-4539 --format json --output safety-report.json
+          uv run pip-audit --ignore-vuln CVE-2026-4539 --format json --output pip-audit-report.json
           uv run pip-audit --ignore-vuln CVE-2026-4539
 
       - name: Upload security reports
@@ -81,5 +81,5 @@ jobs:
           name: security-reports
           path: |
             bandit-report.json
-            safety-report.json
+            pip-audit-report.json
           retention-days: 30
