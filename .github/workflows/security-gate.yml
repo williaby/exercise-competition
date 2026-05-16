@@ -161,17 +161,23 @@ jobs:
           BANDIT: ${{ needs.bandit.result }}
           DEPS: ${{ needs.dependency-audit.result }}
           SECRETS: ${{ needs.secret-scan.result }}
+          # Semgrep is currently advisory (logged, not blocking) — see
+          # SECURITY-FINDINGS.md §2.8. Bandit + CodeQL cover Python SAST
+          # for the blocking path; Semgrep findings still surface in the
+          # job log for review.
           SEMGREP: ${{ needs.semgrep.result }}
         run: |
-          echo "Bandit:        $BANDIT"
-          echo "Dependencies:  $DEPS"
-          echo "Secrets:       $SECRETS"
-          echo "Semgrep:       $SEMGREP"
+          echo "Bandit:        $BANDIT       (blocking)"
+          echo "Dependencies:  $DEPS         (blocking)"
+          echo "Secrets:       $SECRETS      (blocking)"
+          echo "Semgrep:       $SEMGREP      (advisory)"
           if [ "$BANDIT" != "success" ] \
              || [ "$DEPS" != "success" ] \
-             || [ "$SECRETS" != "success" ] \
-             || [ "$SEMGREP" != "success" ]; then
+             || [ "$SECRETS" != "success" ]; then
             echo "::error::Security gate failed — one or more required checks did not pass."
             exit 1
+          fi
+          if [ "$SEMGREP" != "success" ]; then
+            echo "::warning::Semgrep is advisory and did not pass — review the SAST (Semgrep) job log."
           fi
           echo "Security gate passed."

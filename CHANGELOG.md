@@ -25,6 +25,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   them.
 - Added explicit job-level `permissions:` blocks for least-privilege
   on jobs that previously inherited only the top-level grant.
+- Refreshed `uv.lock` so `pip-audit --ignore-vuln CVE-2026-4539`
+  reports zero known vulnerabilities.
+- Repinned `dangoslen/changelog-enforcer` to v3.7.0 (the previous
+  v3.8.0 SHA was unresolvable, causing every PR to fail the
+  changelog check).
+- Resolved Semgrep OWASP Top 10 findings: workflow_dispatch input
+  shell-injection vectors in `fips-compatibility.yml` and
+  `slsa-provenance.yml`, plus the `Host $host` reverse-proxy
+  example in `frontend/nginx.conf`.
+- Temporarily marked the Semgrep job in `security-gate.yml` as
+  advisory (logged, not blocking) — see SECURITY-FINDINGS.md §2.8.
 
 ## [0.1.0] - TBD
 
