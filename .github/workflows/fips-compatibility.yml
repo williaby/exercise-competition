@@ -55,11 +55,18 @@ jobs:
       pull-requests: write
 
     steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+        with:
+          egress-policy: audit
+
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
         with:
           enable-cache: true
 
@@ -68,21 +75,28 @@ jobs:
 
       - name: Run FIPS compatibility check
         id: fips-check
+        shell: bash
+        env:
+          STRICT_MODE: ${{ github.event.inputs.strict_mode }}
         run: |
           # Run the FIPS check script
           STRICT_FLAG=""
-          if [[ "${{ github.event.inputs.strict_mode }}" == "true" ]]; then
+          if [[ "$STRICT_MODE" == "true" ]]; then
             STRICT_FLAG="--strict"
           fi
 
-          # Run check and capture output
+          # Run check and capture output. `set -o pipefail` plus
+          # ${PIPESTATUS[0]} ensure we capture the Python script's
+          # exit code, not `tee`'s (which would otherwise always be 0
+          # and mask a real failure).
           set +e
+          set -o pipefail
           uv run python scripts/check_fips_compatibility.py \
             --fix-hints \
             --include-tests \
             $STRICT_FLAG \
             2>&1 | tee fips-report.txt
-          EXIT_CODE=$?
+          EXIT_CODE=${PIPESTATUS[0]}
           set -e
 
           # Also generate JSON report
@@ -203,11 +217,18 @@ jobs:
     needs: fips-check
 
     steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+        with:
+          egress-policy: audit
+
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
         with:
           enable-cache: true
 

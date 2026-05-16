@@ -1,3 +1,8 @@
+# CI Gate
+# Placeholder gate that asserts CI status. The real enforcement is provided
+# by the CI workflow (ci.yml) and by branch protection rules requiring its
+# checks. This stub exists to reserve the name; expand it when richer
+# gating logic is needed.
 name: CI Gate
 
 on:
@@ -13,6 +18,13 @@ jobs:
   ci-gate:
     name: CI Gate
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+        with:
+          egress-policy: audit
+
       - name: Placeholder
-        run: echo "CI Gate stub - implementation pending"
+        run: echo "CI Gate stub - real enforcement lives in ci.yml + branch protection"

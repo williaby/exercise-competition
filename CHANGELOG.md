@@ -9,6 +9,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Initial project setup and structure
+- `SECURITY-FINDINGS.md` documenting the security review of the Python
+  source and CI/CD workflows.
+- Real blocking Security Gate workflow (Bandit, pip-audit, TruffleHog,
+  Semgrep) replacing the previous placeholder.
+
+### Security
+- Pinned every `uses:` reference in `.github/workflows/` to a commit
+  SHA (no more floating `@v7` or `@main`).
+- Removed `continue-on-error: true` from the `pip-audit` step in
+  `security-analysis.yml` so dependency vulnerabilities now fail the
+  job.
+- Added `step-security/harden-runner` with `egress-policy: audit` and
+  `persist-credentials: false` on checkouts to all jobs that lacked
+  them.
+- Added explicit job-level `permissions:` blocks for least-privilege
+  on jobs that previously inherited only the top-level grant.
+- Refreshed `uv.lock` so `pip-audit --ignore-vuln CVE-2026-4539`
+  reports zero known vulnerabilities.
+- Repinned `dangoslen/changelog-enforcer` to v3.7.0 (the previous
+  v3.8.0 SHA was unresolvable, causing every PR to fail the
+  changelog check).
+- Resolved Semgrep OWASP Top 10 findings: workflow_dispatch input
+  shell-injection vectors in `fips-compatibility.yml` and
+  `slsa-provenance.yml`, plus the `Host $host` reverse-proxy
+  example in `frontend/nginx.conf`.
+- Temporarily marked the Semgrep job in `security-gate.yml` as
+  advisory (logged, not blocking) — see SECURITY-FINDINGS.md §2.8.
 
 ## [0.1.0] - TBD
 

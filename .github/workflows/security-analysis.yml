@@ -33,12 +33,22 @@ jobs:
   security:
     name: Security Scan
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
     steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+        with:
+          egress-policy: audit
+
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
         with:
           enable-cache: true
 
@@ -55,10 +65,14 @@ jobs:
           # Also generate human-readable output for PR review
           uv run bandit -r src/ -c pyproject.toml --severity-level medium --confidence-level medium
 
-      - name: Run Safety dependency check
-        id: safety
-        run: uv run pip-audit --format json --output safety-report.json
-        continue-on-error: true
+      # pip-audit must fail the job when vulnerabilities are found so the
+      # Security Gate can block merges. Documented exceptions go through
+      # --ignore-vuln referenced in docs/security/vulnerability-risk-register.md.
+      - name: Run dependency vulnerability scan (pip-audit)
+        id: pip-audit
+        run: |
+          uv run pip-audit --ignore-vuln CVE-2026-4539 --format json --output pip-audit-report.json
+          uv run pip-audit --ignore-vuln CVE-2026-4539
 
       - name: Upload security reports
         if: always()
@@ -67,16 +81,5 @@ jobs:
           name: security-reports
           path: |
             bandit-report.json
-            safety-report.json
+            pip-audit-report.json
           retention-days: 30
-
-      - name: Check scan results
-        if: always()
-        run: |
-          if [[ "${{ steps.bandit.outcome }}" == "failure" ]]; then
-            echo "::error::Bandit security scan found issues"
-            exit 1
-          fi
-          if [[ "${{ steps.safety.outcome }}" == "failure" ]]; then
-            echo "::warning::Dependency audit found vulnerabilities — review safety-report.json artifact"
-          fi

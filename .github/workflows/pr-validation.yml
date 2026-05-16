@@ -38,6 +38,8 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
@@ -45,7 +47,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install UV
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
         with:
           enable-cache: true
           cache-dependency-glob: "uv.lock"
@@ -83,9 +85,10 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Check for CHANGELOG update
-        uses: dangoslen/changelog-enforcer@4243a92c71c0f1e6c88e7ae43d6f7c3146e8f8ee # v3.8.0
+        uses: dangoslen/changelog-enforcer@8b5e9dc3121363bb7c0115f8533404d92af382de # v3.7.0
         with:
           changeLogPath: 'CHANGELOG.md'
           skipLabels: 'skip-changelog,dependencies,documentation'
