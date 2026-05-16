@@ -63,15 +63,26 @@ jobs:
 
       - name: Determine version
         id: version
+        shell: bash
         env:
           INPUT_VERSION: ${{ github.event.inputs.version }}
         run: |
           if [ -n "$INPUT_VERSION" ]; then
+            # workflow_dispatch input is attacker-controllable. Reject
+            # anything that isn't a strict semver-like token so a
+            # crafted value (e.g. with newlines) can't inject extra
+            # keys into $GITHUB_OUTPUT.
+            if [[ ! "$INPUT_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-.][A-Za-z0-9.]+)?$ ]]; then
+              echo "Invalid version format: $INPUT_VERSION" >&2
+              exit 1
+            fi
             VERSION="$INPUT_VERSION"
           else
             VERSION=$(grep -Po '(?<=^version = ")[^"]*' pyproject.toml)
           fi
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          # printf with %s prevents echo's interpretation of escape
+          # sequences in $VERSION when written to $GITHUB_OUTPUT.
+          printf 'version=%s\n' "$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Build package
         run: uv build

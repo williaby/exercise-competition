@@ -75,6 +75,7 @@ jobs:
 
       - name: Run FIPS compatibility check
         id: fips-check
+        shell: bash
         env:
           STRICT_MODE: ${{ github.event.inputs.strict_mode }}
         run: |
@@ -84,14 +85,18 @@ jobs:
             STRICT_FLAG="--strict"
           fi
 
-          # Run check and capture output
+          # Run check and capture output. `set -o pipefail` plus
+          # ${PIPESTATUS[0]} ensure we capture the Python script's
+          # exit code, not `tee`'s (which would otherwise always be 0
+          # and mask a real failure).
           set +e
+          set -o pipefail
           uv run python scripts/check_fips_compatibility.py \
             --fix-hints \
             --include-tests \
             $STRICT_FLAG \
             2>&1 | tee fips-report.txt
-          EXIT_CODE=$?
+          EXIT_CODE=${PIPESTATUS[0]}
           set -e
 
           # Also generate JSON report

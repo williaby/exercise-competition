@@ -256,6 +256,38 @@ was applied alongside the harden-runner additions in §2.5, and
 extended (per code review) to `pr-validation.yml` (both jobs),
 `slsa-provenance.yml` (build job), and `reuse.yml` (both jobs).
 
+### 2.7 Other workflow fixes folded into this PR
+
+- **`dangoslen/changelog-enforcer` pin was unreachable.** Main had
+  `dangoslen/changelog-enforcer@4243a92c71c0f1e6c88e7ae43d6f7c3146e8f8ee
+  # v3.8.0`, but no `v3.8.0` tag exists in that repo, so the runner
+  failed to resolve the action. Repinned to v3.7.0
+  (`8b5e9dc3121363bb7c0115f8533404d92af382de`).
+- **`.semgrep.yml` had an invalid placeholder rule** (an INFO rule
+  whose body was `pattern-inside: import $MODULE`). Replaced with an
+  explicit `rules: []` plus a comment pointing at the public
+  rulesets pulled by the Security Gate.
+- **`fips-compatibility.yml` masked script failure** via
+  `uv run … | tee fips-report.txt` followed by `EXIT_CODE=$?`, which
+  captured `tee`'s exit code rather than the Python script's. Added
+  `set -o pipefail` and switched to `EXIT_CODE=${PIPESTATUS[0]}` so a
+  real FIPS-check failure now fails the workflow.
+- **`slsa-provenance.yml` wrote an unvalidated input to
+  `$GITHUB_OUTPUT`.** A crafted `workflow_dispatch` value (e.g.
+  `1.0.0\nmalicious=injected`) could inject additional output keys.
+  Added a strict semver regex check on `$INPUT_VERSION` and replaced
+  `echo "version=$VERSION" >> $GITHUB_OUTPUT` with `printf
+  'version=%s\n' "$VERSION" >> "$GITHUB_OUTPUT"`.
+- **Reusable workflow pins in `ByronWilliamsCPA/.github`** stay
+  pinned to the SHA chosen in this PR. The pinned `python-sbom.yml`
+  fails its `Install cyclonedx-bom` step in the current upstream HEAD;
+  rather than chase a green SHA in this PR, the failure is acknowledged
+  here so it can be addressed by updating the upstream reusable
+  workflow (then bumping the pin) as a follow-up. The other reusable
+  workflow jobs (`container-security`, `mutation-testing`,
+  `publish-pypi`, `coverage`, `slsa`) are not on the PR path and are
+  not impacted.
+
 ### 2.8 Semgrep job is advisory (not blocking) — TEMPORARY
 
 The `semgrep` job in `security-gate.yml` exits non-zero in CI for an
@@ -279,27 +311,6 @@ then flip Semgrep back to blocking in the aggregator.
 
 This is documented as a temporary exception to the "no
 continue-on-error on security jobs" requirement.
-
-### 2.7 Other workflow fixes folded into this PR
-
-- **`dangoslen/changelog-enforcer` pin was unreachable.** Main had
-  `dangoslen/changelog-enforcer@4243a92c71c0f1e6c88e7ae43d6f7c3146e8f8ee
-  # v3.8.0`, but no `v3.8.0` tag exists in that repo, so the runner
-  failed to resolve the action. Repinned to v3.7.0
-  (`8b5e9dc3121363bb7c0115f8533404d92af382de`).
-- **`.semgrep.yml` had an invalid placeholder rule** (an INFO rule
-  whose body was `pattern-inside: import $MODULE`). Replaced with an
-  explicit `rules: []` plus a comment pointing at the public
-  rulesets pulled by the Security Gate.
-- **Reusable workflow pins in `ByronWilliamsCPA/.github`** stay
-  pinned to the SHA chosen in this PR. The pinned `python-sbom.yml`
-  fails its `Install cyclonedx-bom` step in the current upstream HEAD;
-  rather than chase a green SHA in this PR, the failure is acknowledged
-  here so it can be addressed by updating the upstream reusable
-  workflow (then bumping the pin) as a follow-up. The other reusable
-  workflow jobs (`container-security`, `mutation-testing`,
-  `publish-pypi`, `coverage`, `slsa`) are not on the PR path and are
-  not impacted.
 
 ---
 
