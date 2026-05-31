@@ -54,12 +54,12 @@ class Standing:
     """A participant's current competition standing.
 
     Attributes:
-        participant_id: Database ID of the participant.
-        name: Participant display name.
-        points: Number of compliant weeks.
-        avg_days: Average exercise days per submitted week.
-        streak: Consecutive compliant weeks from most recent backward.
-        weeks_submitted: Number of weeks with submissions.
+        participant_id (int): Database ID of the participant.
+        name (str): Participant display name.
+        points (int): Number of compliant weeks.
+        avg_days (float): Average exercise days per submitted week.
+        streak (int): Consecutive compliant weeks from most recent backward.
+        weeks_submitted (int): Number of weeks with submissions.
     """
 
     participant_id: int
@@ -75,11 +75,11 @@ class StravaStats:
     """Aggregated Strava activity stats for a participant.
 
     Attributes:
-        participant_id: Database ID of the participant.
-        name: Participant display name.
-        total_duration_minutes: Total moving time across all activities.
-        total_distance_miles: Total distance across all activities.
-        activity_count: Number of Strava activities synced.
+        participant_id (int): Database ID of the participant.
+        name (str): Participant display name.
+        total_duration_minutes (float): Total moving time across all activities.
+        total_distance_miles (float): Total distance across all activities.
+        activity_count (int): Number of Strava activities synced.
     """
 
     participant_id: int
@@ -103,10 +103,10 @@ def get_week_date_range(week: int) -> tuple[datetime.date, datetime.date]:
     """Get the start (Mon) and end (Sun) dates for a competition week.
 
     Args:
-        week: Week number (1-based).
+        week (int): Week number (1-based).
 
     Returns:
-        Tuple of (start_date, end_date) for that week.
+        tuple[datetime.date, datetime.date]: Tuple of (start_date, end_date) for that week.
     """
     start = COMPETITION_START + datetime.timedelta(weeks=week - 1)
     end = start + datetime.timedelta(days=6)
@@ -117,10 +117,10 @@ def get_week_label(week: int) -> str:
     """Get a display label for a competition week with date range.
 
     Args:
-        week: Week number (1-based).
+        week (int): Week number (1-based).
 
     Returns:
-        Label like "Week 1 (3/30 - 4/5)".
+        str: Label like "Week 1 (3/30 - 4/5)".
     """
     start, end = get_week_date_range(week)
     return f"Week {week} ({start.month}/{start.day} - {end.month}/{end.day})"
@@ -130,7 +130,7 @@ def get_current_week() -> int | None:
     """Get the current competition week number.
 
     Returns:
-        The week number if within the competition period, or None if
+        int | None: The week number if within the competition period, or None if
         before or after the competition.
     """
     today = datetime.datetime.now(tz=COMPETITION_TZ).date()
@@ -147,10 +147,10 @@ def days_exercised(submission: WeeklySubmission) -> int:
     """Count exercise days in a submission.
 
     Args:
-        submission: A weekly submission record.
+        submission (WeeklySubmission): A weekly submission record.
 
     Returns:
-        Number of days marked as exercised (0-7).
+        int: Number of days marked as exercised (0-7).
     """
     return sum(getattr(submission, field) for field in DAY_FIELDS)
 
@@ -162,10 +162,10 @@ def is_compliant(submission: WeeklySubmission) -> bool:
     (default: 2 days).
 
     Args:
-        submission: A weekly submission record.
+        submission (WeeklySubmission): A weekly submission record.
 
     Returns:
-        True if the participant met or exceeded the compliance threshold.
+        bool: True if the participant met or exceeded the compliance threshold.
     """
     return days_exercised(submission) >= _get_compliance_threshold()
 
@@ -178,10 +178,10 @@ def _calculate_streak(
     Missing weeks (no submission) break the streak.
 
     Args:
-        submissions: Submissions for a single participant, any order.
+        submissions (Sequence[WeeklySubmission]): Submissions for a single participant, any order.
 
     Returns:
-        Length of the current compliant streak.
+        int: Length of the current compliant streak.
     """
     if not submissions:
         return 0
@@ -205,11 +205,11 @@ def calculate_standings(
     """Compute leaderboard standings for all participants.
 
     Args:
-        all_submissions: All weekly submissions across all participants.
-        participants: Sequence of (participant_id, name) tuples.
+        all_submissions (Sequence[WeeklySubmission]): All weekly submissions across all participants.
+        participants (Sequence[tuple[int, str]]): Sequence of (participant_id, name) tuples.
 
     Returns:
-        List of Standing objects sorted by points desc, then avg_days desc.
+        list[Standing]: List of Standing objects sorted by points desc, then avg_days desc.
     """
     by_participant: dict[int, list[WeeklySubmission]] = {
         pid: [] for pid, _ in participants
@@ -261,11 +261,12 @@ def calculate_strava_stats(
     """Aggregate Strava activity stats per participant.
 
     Args:
-        activities: Sequence of (participant_id, name, moving_time_seconds,
-            distance_meters) tuples from a joined query.
+        activities (Sequence[tuple[int, str, int, float | None]]): Sequence of
+            (participant_id, name, moving_time_seconds, distance_meters) tuples
+            from a joined query.
 
     Returns:
-        List of StravaStats sorted by total duration descending.
+        list[StravaStats]: List of StravaStats sorted by total duration descending.
     """
     totals: dict[int, _ActivityAccumulator] = {}
     for pid, name, moving_time, distance in activities:

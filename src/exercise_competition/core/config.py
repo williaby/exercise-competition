@@ -6,7 +6,7 @@ Pydantic-settings handles the parsing and validation.
 
 from __future__ import annotations
 
-from typing import Annotated, Literal
+from typing import Annotated, ClassVar, Literal
 
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -16,18 +16,24 @@ class Settings(BaseSettings):
     """Configuration settings for the application, loaded from environment variables.
 
     Attributes:
-        log_level: The logging level for the application.
-        json_logs: Flag to enable or disable JSON formatted logs.
-        include_timestamp: Flag to include timestamps in logs.
-        database_url: SQLAlchemy database URL.
-        rate_limit_rpm: Rate limit requests per minute.
-        week_min: First competition week number.
-        week_max: Last competition week number (total weeks).
-        compliance_threshold: Minimum exercise days per week for a point.
-        csrf_ttl_seconds: CSRF token time-to-live in seconds.
+        model_config (ClassVar[SettingsConfigDict]): Pydantic-settings model configuration.
+        log_level (Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]): The logging level for the application.
+        json_logs (bool): Flag to enable or disable JSON formatted logs.
+        include_timestamp (bool): Flag to include timestamps in logs.
+        database_url (str): SQLAlchemy database URL.
+        rate_limit_rpm (Annotated[int, Field(ge=1)]): Rate limit requests per minute.
+        week_min (Annotated[int, Field(ge=1)]): First competition week number.
+        week_max (Annotated[int, Field(ge=1)]): Last competition week number (total weeks).
+        compliance_threshold (Annotated[int, Field(ge=1, le=7)]): Minimum exercise days per week for a point.
+        csrf_ttl_seconds (Annotated[int, Field(ge=60)]): CSRF token time-to-live in seconds.
+        strava_client_id (str): Strava API client ID.
+        strava_client_secret (str): Strava API client secret.
+        strava_redirect_uri (str): OAuth redirect URI for Strava.
+        strava_webhook_verify_token (str): Token to verify Strava webhook subscriptions.
+        strava_min_activity_minutes (Annotated[int, Field(ge=1, le=1440)]): Minimum activity duration to count as exercise.
     """
 
-    model_config = SettingsConfigDict(
+    model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
         env_prefix="exercise_competition_",
         case_sensitive=False,
         extra="ignore",

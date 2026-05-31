@@ -28,10 +28,10 @@ class Participant(Base):
     """A competition participant (one of the four brothers).
 
     Attributes:
-        id: Auto-increment primary key.
-        name: Unique participant name (e.g. "Byron Williams").
-        created_at: Timestamp when the participant was added.
-        submissions: Related weekly submissions.
+        id (Mapped[int]): Auto-increment primary key.
+        name (Mapped[str]): Unique participant name (e.g. "Byron Williams").
+        created_at (Mapped[datetime.datetime]): Timestamp when the participant was added.
+        submissions (Mapped[list[WeeklySubmission]]): Related weekly submissions.
     """
 
     __tablename__ = "participants"
@@ -58,18 +58,18 @@ class WeeklySubmission(Base):
     Compliance: 2+ days checked = 1 point for the week.
 
     Attributes:
-        id: Auto-increment primary key.
-        participant_id: Foreign key to Participant.
-        week_number: Competition week (1-20).
-        monday: Exercised on Monday.
-        tuesday: Exercised on Tuesday.
-        wednesday: Exercised on Wednesday.
-        thursday: Exercised on Thursday.
-        friday: Exercised on Friday.
-        saturday: Exercised on Saturday.
-        sunday: Exercised on Sunday.
-        created_at: Timestamp when the submission was created.
-        participant: Related participant.
+        id (Mapped[int]): Auto-increment primary key.
+        participant_id (Mapped[int]): Foreign key to Participant.
+        week_number (Mapped[int]): Competition week (1-20).
+        monday (Mapped[bool]): Exercised on Monday.
+        tuesday (Mapped[bool]): Exercised on Tuesday.
+        wednesday (Mapped[bool]): Exercised on Wednesday.
+        thursday (Mapped[bool]): Exercised on Thursday.
+        friday (Mapped[bool]): Exercised on Friday.
+        saturday (Mapped[bool]): Exercised on Saturday.
+        sunday (Mapped[bool]): Exercised on Sunday.
+        created_at (Mapped[datetime.datetime]): Timestamp when the submission was created.
+        participant (Mapped[Participant]): Related participant.
     """
 
     __tablename__ = "weekly_submissions"
@@ -135,15 +135,16 @@ class StravaToken(Base):
     on behalf of a participant.
 
     Attributes:
-        id: Auto-increment primary key.
-        participant_id: Foreign key to Participant (unique — one Strava account per person).
-        strava_athlete_id: Strava's unique athlete identifier.
-        access_token: Current OAuth access token.
-        refresh_token: OAuth refresh token (used to get new access tokens).
-        expires_at: Unix timestamp when the access token expires.
-        scope: OAuth scope granted (e.g. "activity:read").
-        created_at: When the connection was first established.
-        updated_at: When tokens were last refreshed.
+        id (Mapped[int]): Auto-increment primary key.
+        participant_id (Mapped[int]): Foreign key to Participant (unique, one Strava account per person).
+        strava_athlete_id (Mapped[int]): Strava's unique athlete identifier.
+        access_token (Mapped[str]): Current OAuth access token.
+        refresh_token (Mapped[str]): OAuth refresh token (used to get new access tokens).
+        expires_at (Mapped[int]): Unix timestamp when the access token expires.
+        scope (Mapped[str]): OAuth scope granted (e.g. "activity:read").
+        created_at (Mapped[datetime.datetime]): When the connection was first established.
+        updated_at (Mapped[datetime.datetime]): When tokens were last refreshed.
+        participant (Mapped[Participant]): Related Participant ORM object.
     """
 
     __tablename__ = "strava_tokens"
@@ -192,16 +193,17 @@ class StravaActivity(Base):
     weekly submission day checkboxes.
 
     Attributes:
-        id: Auto-increment primary key.
-        participant_id: Foreign key to Participant.
-        strava_activity_id: Strava's unique activity identifier.
-        activity_type: Strava activity type (Run, Ride, Swim, etc.).
-        name: Activity name from Strava.
-        start_date_local: Local start time of the activity.
-        elapsed_time_seconds: Total elapsed time in seconds.
-        moving_time_seconds: Moving time in seconds.
-        distance_meters: Distance in meters (nullable for gym activities).
-        created_at: When this record was synced.
+        id (Mapped[int]): Auto-increment primary key.
+        participant_id (Mapped[int]): Foreign key to Participant.
+        strava_activity_id (Mapped[int]): Strava's unique activity identifier.
+        activity_type (Mapped[str]): Strava activity type (Run, Ride, Swim, etc.).
+        name (Mapped[str]): Activity name from Strava.
+        start_date_local (Mapped[datetime.datetime]): Local start time of the activity.
+        elapsed_time_seconds (Mapped[int]): Total elapsed time in seconds.
+        moving_time_seconds (Mapped[int]): Moving time in seconds.
+        distance_meters (Mapped[float | None]): Distance in meters (nullable for gym activities).
+        created_at (Mapped[datetime.datetime]): When this record was synced.
+        participant (Mapped[Participant]): Related Participant ORM object.
     """
 
     __tablename__ = "strava_activities"
