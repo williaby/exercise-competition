@@ -80,10 +80,10 @@ def strava_connect(participant_id: int) -> RedirectResponse:
     """Redirect participant to Strava OAuth authorization page.
 
     Args:
-        participant_id: ID of the participant initiating the connection.
+        participant_id (int): ID of the participant initiating the connection.
 
     Returns:
-        Redirect to Strava's authorization page.
+        RedirectResponse: Redirect to Strava's authorization page.
     """
     if not settings.strava_client_id:
         return RedirectResponse(
@@ -113,12 +113,12 @@ def strava_callback(
     """Handle Strava OAuth callback after user authorization.
 
     Args:
-        code: Authorization code from Strava.
-        state: Participant ID passed as state parameter.
-        error: Error message if authorization was denied.
+        code (Annotated[str | None, Query()]): Authorization code from Strava.
+        state (Annotated[str | None, Query()]): Participant ID passed as state parameter.
+        error (Annotated[str | None, Query()]): Error message if authorization was denied.
 
     Returns:
-        Redirect to Strava settings page with status message.
+        RedirectResponse: Redirect to Strava settings page with status message.
     """
     if error:
         logger.warning("strava_auth_denied", error=error)
@@ -181,10 +181,10 @@ def strava_disconnect(participant_id: int) -> RedirectResponse:
     """Disconnect a participant's Strava account.
 
     Args:
-        participant_id: ID of the participant to disconnect.
+        participant_id (int): ID of the participant to disconnect.
 
     Returns:
-        Redirect to Strava settings page.
+        RedirectResponse: Redirect to Strava settings page.
     """
     removed = disconnect_strava(participant_id)
     msg = "disconnected" if removed else "not_connected"
@@ -201,7 +201,7 @@ def strava_sync_all() -> RedirectResponse:
     """Manually trigger a sync for all connected participants.
 
     Returns:
-        Redirect to Strava settings page with sync result.
+        RedirectResponse: Redirect to Strava settings page with sync result.
     """
     try:
         results = sync_all_connected_participants()
@@ -218,10 +218,10 @@ def strava_sync_one(participant_id: int) -> RedirectResponse:
     """Manually trigger a sync for a single participant.
 
     Args:
-        participant_id: ID of the participant to sync.
+        participant_id (int): ID of the participant to sync.
 
     Returns:
-        Redirect to Strava settings page.
+        RedirectResponse: Redirect to Strava settings page.
     """
     try:
         synced = sync_participant_activities(participant_id)
@@ -255,12 +255,12 @@ def strava_webhook_verify(
     Strava sends a GET request with a challenge to verify the webhook.
 
     Args:
-        hub_mode: Should be "subscribe".
-        hub_challenge: Challenge string to echo back.
-        hub_verify_token: Token to validate the request.
+        hub_mode (Annotated[str | None, Query(alias="hub.mode")]): Should be "subscribe".
+        hub_challenge (Annotated[str | None, Query(alias="hub.challenge")]): Challenge string to echo back.
+        hub_verify_token (Annotated[str | None, Query(alias="hub.verify_token")]): Token to validate the request.
 
     Returns:
-        JSON response echoing the challenge.
+        JSONResponse: JSON response echoing the challenge.
     """
     if hub_mode != "subscribe":
         return JSONResponse({"error": "invalid mode"}, status_code=400)
@@ -281,7 +281,7 @@ def strava_webhook_event() -> JSONResponse:
     We acknowledge immediately and rely on periodic syncs to fetch new data.
 
     Returns:
-        200 OK (Strava requires a 200 response within 2 seconds).
+        JSONResponse: 200 OK (Strava requires a 200 response within 2 seconds).
     """
     logger.info("strava_webhook_received")
 
