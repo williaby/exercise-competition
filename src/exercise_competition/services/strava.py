@@ -100,11 +100,11 @@ def get_strava_auth_url(participant_id: int) -> str:
     """Build the Strava OAuth authorization URL.
 
     Args:
-        participant_id: ID of the participant initiating the connection.
+        participant_id (int): ID of the participant initiating the connection.
             Passed as the ``state`` parameter for CSRF-like validation.
 
     Returns:
-        Full Strava OAuth authorization URL.
+        str: Full Strava OAuth authorization URL.
     """
     params = {
         "client_id": settings.strava_client_id,
@@ -122,11 +122,11 @@ def exchange_strava_code(code: str) -> _StravaTokenExchangeData:
     """Exchange an OAuth authorization code for access/refresh tokens.
 
     Args:
-        code: The authorization code from Strava's OAuth redirect.
+        code (str): The authorization code from Strava's OAuth redirect.
 
     Returns:
-        Strava token response containing access_token, refresh_token,
-        expires_at, and athlete info.
+        _StravaTokenExchangeData: Strava token response containing access_token,
+        refresh_token, expires_at, and athlete info.
     """
     with httpx.Client(timeout=15.0) as client:
         resp = client.post(
@@ -148,10 +148,10 @@ def refresh_strava_token(strava_token: StravaToken) -> StravaToken:
     Updates the token record in-place and persists to the database.
 
     Args:
-        strava_token: The StravaToken record with an expired access token.
+        strava_token (StravaToken): The StravaToken record with an expired access token.
 
     Returns:
-        The updated StravaToken with fresh credentials.
+        StravaToken: The updated StravaToken with fresh credentials.
     """
     with httpx.Client(timeout=15.0) as client:
         resp = client.post(
@@ -214,10 +214,10 @@ def _get_valid_token(strava_token: StravaToken) -> StravaToken:
     """Ensure a StravaToken has a valid (non-expired) access token.
 
     Args:
-        strava_token: The token to validate/refresh.
+        strava_token (StravaToken): The token to validate/refresh.
 
     Returns:
-        A StravaToken with a valid access token.
+        StravaToken: A StravaToken with a valid access token.
     """
     if strava_token.is_expired:
         return refresh_strava_token(strava_token)
@@ -231,11 +231,11 @@ def save_strava_token(
     """Save or update a Strava token for a participant.
 
     Args:
-        participant_id: The participant's database ID.
-        token_data: Response from Strava token exchange/refresh.
+        participant_id (int): The participant's database ID.
+        token_data (_StravaTokenExchangeData): Response from Strava token exchange/refresh.
 
     Returns:
-        The created or updated StravaToken record.
+        StravaToken: The created or updated StravaToken record.
     """
     athlete_id = token_data["athlete"]["id"]
 
@@ -306,12 +306,12 @@ def fetch_strava_activities(
     """Fetch activities from the Strava API.
 
     Args:
-        strava_token: A valid StravaToken with access credentials.
-        after: Unix timestamp — only return activities after this time.
-        before: Unix timestamp — only return activities before this time.
+        strava_token (StravaToken): A valid StravaToken with access credentials.
+        after (int | None): Unix timestamp -- only return activities after this time.
+        before (int | None): Unix timestamp -- only return activities before this time.
 
     Returns:
-        List of activity dicts from the Strava API.
+        list[_StravaActivityData]: List of activity dicts from the Strava API.
     """
     token = _get_valid_token(strava_token)
     params: dict[str, int] = {"per_page": 100}
@@ -347,10 +347,10 @@ def _date_to_weekday_field(dt: datetime.datetime) -> str:
     """Map a datetime to the corresponding WeeklySubmission day field name.
 
     Args:
-        dt: A datetime in local time.
+        dt (datetime.datetime): A datetime in local time.
 
     Returns:
-        Field name like "monday", "tuesday", etc.
+        str: Field name like "monday", "tuesday", etc.
     """
     return _WEEKDAY_TO_FIELD[dt.weekday()]
 
@@ -359,10 +359,10 @@ def _date_to_competition_week(dt: datetime.date) -> int | None:
     """Map a date to a competition week number (1-20).
 
     Args:
-        dt: A date to check.
+        dt (datetime.date): A date to check.
 
     Returns:
-        Week number if within competition, None otherwise.
+        int | None: Week number if within competition, None otherwise.
     """
     if dt < COMPETITION_START:
         return None
@@ -381,10 +381,10 @@ def sync_participant_activities(participant_id: int) -> int:
     corresponding day as exercised if the activity was 30+ minutes.
 
     Args:
-        participant_id: The participant to sync.
+        participant_id (int): The participant to sync.
 
     Returns:
-        Number of new activities synced.
+        int: Number of new activities synced.
 
     Raises:
         ValueError: If the participant has no Strava connection.
@@ -506,10 +506,10 @@ def _update_weekly_submission(
     exists, we create one with only the given day checked.
 
     Args:
-        session: Active SQLAlchemy session.
-        participant_id: The participant's database ID.
-        week_number: Competition week number (1-20).
-        day_field: Field name to mark as True (e.g. "monday").
+        session (Session): Active SQLAlchemy session.
+        participant_id (int): The participant's database ID.
+        week_number (int): Competition week number (1-20).
+        day_field (str): Field name to mark as True (e.g. "monday").
     """
     submission = (
         session.query(WeeklySubmission)
@@ -553,7 +553,7 @@ def get_connected_participants() -> list[_ParticipantConnection]:
     """Get all participants and their Strava connection status.
 
     Returns:
-        List of dicts with participant info and connection status.
+        list[_ParticipantConnection]: List of dicts with participant info and connection status.
     """
     with get_session() as session:
         participants = session.query(Participant).order_by(Participant.name).all()
@@ -579,10 +579,10 @@ def disconnect_strava(participant_id: int) -> bool:
     Deauthorizes the app on Strava's side and removes the local token.
 
     Args:
-        participant_id: The participant to disconnect.
+        participant_id (int): The participant to disconnect.
 
     Returns:
-        True if a connection was removed, False if none existed.
+        bool: True if a connection was removed, False if none existed.
     """
     with get_session() as session:
         token = (
@@ -618,7 +618,7 @@ def sync_all_connected_participants() -> dict[str, int]:
     """Sync activities for all participants with a Strava connection.
 
     Returns:
-        Dict mapping participant name to number of activities synced.
+        dict[str, int]: Dict mapping participant name to number of activities synced.
     """
     results: dict[str, int] = {}
 
