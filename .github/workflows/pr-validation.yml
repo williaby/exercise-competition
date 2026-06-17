@@ -67,40 +67,13 @@ jobs:
             echo "No dead code detected with 90% confidence." >> $GITHUB_STEP_SUMMARY
           fi
 
-  # Changelog Enforcement
-  changelog:
-    name: Changelog Check
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: Harden the runner
-        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
-        with:
-          egress-policy: audit
-
-      - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          fetch-depth: 0
-
-      - name: Check for CHANGELOG update
-        uses: dangoslen/changelog-enforcer@4243a92c71c0f1e6c88e7ae43d6f7c3146e8f8ee # v3.8.0
-        with:
-          changeLogPath: 'CHANGELOG.md'
-          skipLabels: 'skip-changelog,dependencies,documentation'
-          missingUpdateErrorMessage: |
-            Please update CHANGELOG.md with a description of your changes.
-            Add the label 'skip-changelog' if this PR does not require a changelog entry.
-
-
   # Validation Summary
   validation-summary:
     name: Validation Summary
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    needs: [dead-code, changelog]
+    needs: [dead-code]
     if: always()
     steps:
       - name: Check validation results
@@ -114,13 +87,6 @@ jobs:
             echo "Dead Code Check: ${{ needs.dead-code.result }}" >> $GITHUB_STEP_SUMMARY
           fi
 
-          if [ "${{ needs.changelog.result }}" == "success" ]; then
-            echo "Changelog: Updated" >> $GITHUB_STEP_SUMMARY
-          elif [ "${{ needs.changelog.result }}" == "skipped" ]; then
-            echo "Changelog: Skipped" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "Changelog: ${{ needs.changelog.result }}" >> $GITHUB_STEP_SUMMARY
-          fi
 
           echo ""
           echo "PR validation checks complete." >> $GITHUB_STEP_SUMMARY
