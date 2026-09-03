@@ -40,7 +40,7 @@ class StandingsCache:
     threadpool workers cannot observe torn state.
 
     Attributes:
-        ttl_seconds: How long cached data remains valid.
+        ttl_seconds (float): How long cached data remains valid.
     """
 
     ttl_seconds: float = _DEFAULT_TTL

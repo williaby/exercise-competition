@@ -48,7 +48,7 @@ def get_engine() -> Engine:
     """Get or create the SQLAlchemy engine.
 
     Returns:
-        The configured SQLAlchemy engine.
+        Engine: The configured SQLAlchemy engine.
     """
     global _engine  # noqa: PLW0603
     if _engine is None:
@@ -65,7 +65,7 @@ def get_session_factory() -> sessionmaker[Session]:
     """Get or create the session factory.
 
     Returns:
-        A sessionmaker bound to the engine.
+        sessionmaker[Session]: A sessionmaker bound to the engine.
     """
     global _session_factory  # noqa: PLW0603
     if _session_factory is None:
@@ -78,7 +78,10 @@ def get_session() -> Generator[Session, None, None]:
     """Provide a transactional database session.
 
     Yields:
-        A SQLAlchemy Session that auto-commits on success, rolls back on error.
+        Session: A SQLAlchemy Session that auto-commits on success, rolls back on error.
+
+    Raises:
+        Exception: Re-raises any exception after rolling back the session.
     """
     session = get_session_factory()()
     try:

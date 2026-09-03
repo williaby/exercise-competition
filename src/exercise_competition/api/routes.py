@@ -154,11 +154,11 @@ def _build_submit_context(
     """Build the template context for the submit form.
 
     Args:
-        error: Optional error message to display.
-        success: Optional success message to display.
+        error (str | None): Optional error message to display.
+        success (str | None): Optional success message to display.
 
     Returns:
-        A typed context dict for the submit template.
+        SubmitContext: Typed context dict for the submit template.
     """
     current_week = get_current_week()
     return SubmitContext(
@@ -182,10 +182,10 @@ def _validate_participant_name(name: str) -> int | None:
     so the caller is not holding a detached ORM object.
 
     Args:
-        name: The participant name to look up.
+        name (str): The participant name to look up.
 
     Returns:
-        The participant's database ID, or None.
+        int | None: The participant's database ID, or None.
     """
     with get_session() as session:
         participant = (
