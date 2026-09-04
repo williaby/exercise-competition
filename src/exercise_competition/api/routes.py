@@ -273,13 +273,15 @@ def submit_exercise(
         )
 
         if existing is not None:
-            existing.monday = monday
-            existing.tuesday = tuesday
-            existing.wednesday = wednesday
-            existing.thursday = thursday
-            existing.friday = friday
-            existing.saturday = saturday
-            existing.sunday = sunday
+            # Merge with existing data: never revert a day already marked True
+            # (Strava may have set days the user didn't check on the form)
+            existing.monday = existing.monday or monday
+            existing.tuesday = existing.tuesday or tuesday
+            existing.wednesday = existing.wednesday or wednesday
+            existing.thursday = existing.thursday or thursday
+            existing.friday = existing.friday or friday
+            existing.saturday = existing.saturday or saturday
+            existing.sunday = existing.sunday or sunday
             submission = existing
             is_update = True
         else:

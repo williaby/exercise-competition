@@ -164,8 +164,12 @@ class TestSubmitForm:
         assert response.status_code == 200
         assert "Submission updated" in response.text
 
-    def test_resubmission_can_remove_days(self, client):
-        """Resubmitting with fewer days overwrites — regression guard against partial updates."""
+    def test_resubmission_merges_days(self, client):
+        """Resubmitting never removes previously recorded days (append-only).
+
+        Days set by a prior submission (or Strava sync) are preserved even if
+        the new form submission doesn't include them.
+        """
         form1 = client.get("/submit")
         csrf1 = _extract_csrf_token(form1.text)
 
@@ -187,7 +191,7 @@ class TestSubmitForm:
         assert week_before.status_code == 200
         assert "<strong>3</strong>" in week_before.text
 
-        # Resubmit with only 1 day
+        # Resubmit with only 1 new day — prior days must NOT be removed
         form2 = client.get("/submit")
         csrf2 = _extract_csrf_token(form2.text)
         client.post(
@@ -196,15 +200,15 @@ class TestSubmitForm:
                 "csrf_token": csrf2,
                 "participant_name": "Byron Williams",
                 "week_number": "1",
-                "monday": "true",
+                "thursday": "true",
             },
             follow_redirects=False,
         )
 
         week_after = client.get("/week/1")
         assert week_after.status_code == 200
-        # 1 day now — days were replaced, not merged
-        assert "<strong>1</strong>" in week_after.text
+        # 4 days total — monday/tuesday/wednesday preserved, thursday added
+        assert "<strong>4</strong>" in week_after.text
 
     def test_invalid_csrf_shows_error(self, client):
         response = client.post(
