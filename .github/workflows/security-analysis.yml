@@ -80,3 +80,36 @@ jobs:
           if [[ "${{ steps.safety.outcome }}" == "failure" ]]; then
             echo "::warning::Dependency audit found vulnerabilities — review safety-report.json artifact"
           fi
+
+  security-gate-success:
+    # This job runs its own `steps:` (no `uses:`), so GitHub emits its
+    # `name:` verbatim as the status-check context; there is no
+    # workflow-name prefix for a normal job (that two-part
+    # "<caller> / <job>" form only appears for jobs that call a reusable
+    # workflow via `uses:`). The org main ruleset requires the bare
+    # context "Security Gate Validation".
+    # #CRITICAL: the ruleset match is a literal string comparison against
+    # this `name:` field. #VERIFY with
+    # `gh api repos/williaby/exercise-competition/rules/branches/main`
+    # if this job is ever renamed.
+    name: Security Gate Validation
+    runs-on: ubuntu-latest
+    needs: [security]
+    if: always()
+    permissions:
+      contents: read
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+        with:
+          egress-policy: audit
+
+      - name: Check security scan results
+        env:
+          SECURITY_RESULT: ${{ needs.security.result }}
+        run: |
+          if [ "$SECURITY_RESULT" != "success" ]; then
+            echo "::error::Security Gate Validation failed: security scan result is $SECURITY_RESULT"
+            exit 1
+          fi
+          echo "Security Gate Validation passed"
